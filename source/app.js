@@ -2095,7 +2095,14 @@ function renderHud(){legacyRenderHud();renderDday();}
 function afterLoad(){ if (G.set && setupOpen && $("setupCancel").hidden) { setupOpen = false; closeVeil("setupVeil"); $("dock").hidden = false; } syncEnts(); recordVisit(); setupEnvelope(); checkSpecial(); renderHud(); }
 window.addEventListener("resize", resize);
 { // keep the canvas matched to the real visible screen (Safari toolbars, rotation, keyboard)
-  let rz = null; const later = () => { clearTimeout(rz); rz = setTimeout(() => { resize(); window.scrollTo(0, 0); }, 120); };
+  const fitVisible = () => {
+    const vv = window.visualViewport;
+    const gap = vv ? Math.max(0, Math.round(window.innerHeight - (vv.height + vv.offsetTop))) : 0;
+    document.documentElement.style.setProperty("--vvb", gap + "px");
+  };
+  fitVisible();
+  let rz = null; const later = () => { clearTimeout(rz); rz = setTimeout(() => { fitVisible(); resize(); window.scrollTo(0, 0); }, 120); };
+  if (window.visualViewport) window.visualViewport.addEventListener("scroll", later);
   if (window.visualViewport) window.visualViewport.addEventListener("resize", later);
   window.addEventListener("orientationchange", () => { later(); setTimeout(later, 450); });
   document.addEventListener("focusout", (ev) => { if (ev.target && /INPUT|TEXTAREA|SELECT/.test(ev.target.tagName)) setTimeout(() => window.scrollTo(0, 0), 60); });
