@@ -1,0 +1,211 @@
+<title>별빛 마당 · 우리의 시간</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="icon" type="image/png" href="assets/asset-01.png">
+<link rel="apple-touch-icon" href="assets/asset-02.png">
+<link rel="stylesheet" href="./app.css">
+
+<div class="stage">
+  <canvas id="scene" aria-label="반려동물들이 노는 마당. 아이를 누르면 쓰다듬고, 떠다니는 빛을 누르면 모을 수 있어요."></canvas>
+
+  <div class="top">
+    <div class="title px">
+      <h1 id="yardName">나비의 마당</h1>
+      <p id="yardSub">쓰다듬기 0 · 캐치 0</p>
+    </div>
+    <div class="right">
+      <div class="warmth px" title="빛을 모으고 함께 놀면 온기가 쌓여요">
+        <div class="row">
+          <svg class="heart" viewBox="0 0 24 24" aria-hidden="true"><path fill="#e9a7ba" d="M20.5 5.5c-3-3-7-1-8.5 2-1.5-3-5.5-5-8.5-2C-1 10 5 16 12 21c7-5 13-11 8.5-15.5Z"/></svg>
+          온기 <b id="warmNum">0</b>
+        </div>
+        <div class="bar"><i id="warmBar" style="width:0%"></i></div>
+        <div class="next" id="warmNext">다음: 꽃밭</div>
+      </div>
+      <button class="iconbtn px" id="soundBtn" aria-pressed="false" aria-label="잔잔한 소리 켜기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18V5l11-2v13"/><ellipse cx="6" cy="18" rx="3" ry="2.5"/><ellipse cx="17" cy="16" rx="3" ry="2.5"/></svg>
+      </button>
+      <button class="iconbtn px" id="settingsBtn" aria-label="마당 설정"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h5m4 0h9M3 12h11m4 0h3M3 18h3m4 0h11"/><circle cx="10" cy="6" r="2"/><circle cx="16" cy="12" r="2"/><circle cx="8" cy="18" r="2"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="toast px" id="toast" role="status" aria-live="polite"></div>
+  <div class="hint px" id="hint">아이를 살짝 눌러 쓰다듬어 주세요</div>
+
+  <nav class="dock" id="dock" aria-label="함께하기">
+    <div class="dock-inner px">
+      <button class="act" id="feedBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 10h16c0 7-3 10-8 10S4 17 4 10Z"/><path d="M8 6c-1-2 1-3 0-4m4 4c-1-2 1-3 0-4m4 4c-1-2 1-3 0-4"/></svg>
+        밥 주기
+      </button>
+      <button class="act" id="ballBtn" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M5 6c3 3 4 7 3 13M18 5c-3 3-4 7-3 14M3.5 12h17"/></svg>
+        공놀이
+      </button>
+      <button class="act" id="letterBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 2.8 5.6 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.5l6.2-.9Z"/></svg>
+        별 편지
+      </button>
+      <button class="act" id="decoBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21v-9m0 6c-5 0-6-3-6-5 4 0 6 2 6 5m0-2c4 0 6-2 6-5-4 0-6 2-6 5"/><path d="M12 4c-3-5-8 0-5 3-5 2-1 7 3 4 2 5 7 1 5-2 5-1 2-7-1-5-1-2-2-2-2 0Z"/></svg>
+        꾸미기
+      </button>
+      <button class="act" id="moodBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.5 5.5c-3-3-7-1-8.5 2-1.5-3-5.5-5-8.5-2C-1 10 5 16 12 21c7-5 13-11 8.5-15.5Z"/></svg>
+        쉬어 가기
+      </button>
+    </div>
+  </nav>
+
+  <!-- 아이들 소개 -->
+  <div class="veil" id="setupVeil">
+    <form class="sheet px" id="setupForm" autocomplete="off">
+      <h2 id="setupTitle">함께할 아이를 소개해 주세요</h2>
+      <p class="lead" id="setupLead">별빛 마당은 떠나보낸 아이와 천천히 시간을 보내는 작은 공간이에요. 여러 아이와 함께였다면 모두 데려올 수 있어요.</p>
+      <div class="fam">
+        <span class="label">우리 아이들 (최대 5마리)</span>
+        <div class="chips" id="famChips"></div>
+      </div>
+      <label class="field"><span>이름</span><input type="text" id="petName" maxlength="12" placeholder="예: 나비"></label>
+      <div class="field"><span>어떤 아이였나요</span>
+        <div class="chips" id="speciesChips">
+          <button type="button" class="chip" data-v="cat" aria-pressed="true">고양이</button>
+          <button type="button" class="chip" data-v="dog" aria-pressed="false">강아지</button>
+          <button type="button" class="chip" data-v="rabbit" aria-pressed="false">토끼</button>
+          <button type="button" class="chip" data-v="hamster" aria-pressed="false">햄스터</button>
+        </div>
+      </div>
+      <div class="field"><span id="breedLabel">고양이 종류</span><div class="breeds" id="breeds"></div></div>
+      <fieldset class="date-fields"><legend>우리의 소중한 날</legend>
+ <label class="field"><span>처음 만난 날</span><input type="date" id="petMet"></label>
+ <label class="field"><span>태어난 날</span><input type="date" id="petBorn"></label>
+ <label class="field"><span>별이 된 날 · 선택</span><input type="date" id="petStar"></label></fieldset>
+<label class="field date-legacy"><span>다른 기념일 · 선택</span><input type="date" id="petDay"></label>
+      <label class="field"><span>함께한 시간이나 한마디 (선택)</span><input type="text" id="petMotto" maxlength="40" placeholder="예: 2012–2025 · 창가 낮잠을 제일 좋아했던 아이"></label>
+      <div class="field"><span>사진 (선택) · 마당 액자에 걸어 둘게요</span>
+        <div class="photo-row"><div class="thumb" id="thumb"></div>
+          <label class="btn" for="photoInput" style="flex:1">사진 고르기</label>
+          <input type="file" id="photoInput" accept="image/*" class="sr">
+          <button type="button" class="btn" id="photoClear" hidden>빼기</button>
+        </div>
+      </div>
+      <div class="btns" id="removeRow"><button type="button" class="btn quiet" id="removePet">이 아이 목록에서 빼기</button></div>
+      <div class="btns" id="removeConfirm" hidden>
+        <button type="button" class="btn" id="removeKeep">그대로 둘게요</button>
+        <button type="button" class="btn danger" id="removeYes">빼기</button>
+      </div>
+      <div class="btns">
+        <button type="button" class="btn" id="setupCancel" hidden>닫기</button>
+        <button type="submit" class="btn primary" id="setupSubmit">마당 열기</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="veil" id="letterVeil" hidden>
+    <form class="sheet px" id="letterForm">
+      <h2>별 편지</h2>
+      <div class="chips" id="toChips"></div>
+      <label class="field"><span class="sr">편지</span><textarea id="letterText" maxlength="400" placeholder="오늘은 네 생각이 많이 났어."></textarea></label>
+      <div class="count"><button type="button" class="linkbtn" id="pastBtn">지난 편지 보기</button><span><span id="letterCount">0</span> / 400</span></div>
+      <div class="btns">
+        <button type="button" class="btn" data-close>나중에</button>
+        <button type="submit" class="btn primary">별로 띄우기</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="veil" id="readVeil" hidden>
+    <div class="sheet px">
+      <div class="date" id="readDate"></div>
+      <p class="letter" id="readText"></p>
+      <div class="btns" id="readBtns">
+        <button type="button" class="btn" id="readDelete">지우기</button>
+        <button type="button" class="btn primary" data-close>하늘에 그대로 두기</button>
+      </div>
+      <div class="btns" id="readConfirm" hidden>
+        <button type="button" class="btn" id="readKeep">그대로 둘게요</button>
+        <button type="button" class="btn danger" id="readDeleteYes">이 별 지우기</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="veil" id="listVeil" hidden>
+    <div class="sheet px">
+      <h2>지난 편지</h2>
+      <ul class="list" id="starList"></ul>
+      <h3 class="sub">아이들이 남긴 쪽지</h3>
+      <ul class="list" id="noteList"></ul>
+      <div class="btns"><button type="button" class="btn" data-close>닫기</button><button type="button" class="btn primary" id="listWrite">새 편지 쓰기</button></div>
+    </div>
+  </div>
+
+  <div class="veil" id="photoVeil" hidden>
+    <div class="sheet px">
+      <h2 id="photoCap"></h2>
+      <img class="big-photo" id="bigPhoto" alt="">
+      <div class="btns"><button type="button" class="btn primary" data-close>닫기</button></div>
+    </div>
+  </div>
+
+  <div class="veil" id="decoVeil" hidden>
+    <div class="sheet px">
+      <h2>마당 꾸미기</h2>
+      <p class="lead">온기가 모이면 하나씩 열려요. 눌러서 놓거나 치울 수 있어요.</p>
+      <div class="decos" id="decoList"></div>
+      <div class="btns"><button type="button" class="btn primary" data-close>닫기</button></div>
+    </div>
+  </div>
+
+  <div class="veil" id="moodVeil" hidden>
+    <div class="sheet px">
+      <h2>잠깐 쉬어 가요</h2>
+      <button type="button" class="btn primary" id="breatheBtn">같이 숨 쉬기 · 1분</button>
+      <div class="favor" id="favorBox">
+        <span class="label" id="favorFrom">아이의 작은 부탁</span>
+        <p class="ftext" id="favorText"></p>
+        <div class="btns"><button type="button" class="btn" id="favorDone">해 줬어요</button></div>
+        <p class="small" id="favorNote">안 해도 괜찮아요. 아이는 그냥 네가 잘 지내길 바라요.</p>
+      </div>
+      <div class="btns"><button type="button" class="btn" data-close>닫기</button></div>
+    </div>
+  </div>
+
+  <div class="veil" id="noteVeil" hidden>
+    <div class="sheet px">
+      <div class="date" id="noteFrom"></div>
+      <p class="letter note" id="noteText"></p>
+      <div class="btns"><button type="button" class="btn primary" data-close>고마워</button></div>
+    </div>
+  </div>
+
+  <div class="breathe" id="breathe" hidden>
+    <div class="ring" id="ring"></div>
+    <p class="bt" id="breatheText">편하게 앉아요</p>
+    <p class="bs" id="breatheSub">아이들이 같이 숨 쉬어요</p>
+    <button type="button" class="btn" id="breatheStop">그만할게요</button>
+  </div>
+
+  <div class="veil" id="settingsVeil" hidden>
+    <div class="sheet px">
+      <h2>마당 설정</h2>
+<section class="day-widget" id="dayWidget" aria-label="아이와 함께한 시간">
+ <div class="day-pets" id="dayPets"></div>
+ <div class="day-main"><div class="day-portrait"><img id="dayPhoto" alt="" hidden><canvas id="dayAvatar" width="176" height="144" aria-hidden="true"></canvas></div>
+ <div class="day-copy"><p class="day-title" id="dayTitle">우리의 소중한 날</p><div class="day-numbers"><span class="day-prefix" id="dayPrefix"></span><strong class="day-count" id="dayCount">—</strong><span class="day-unit" id="dayUnit"></span></div><p class="day-caption" id="dayCaption"></p></div></div>
+ <div class="day-bottom"><div class="day-kinds" id="dayKinds"></div><button type="button" class="day-edit" id="dayEdit">날짜 정하기</button></div></section>
+      <label class="field"><span>마당 이름</span><input type="text" id="yardNameInput" maxlength="16" placeholder="비워 두면 아이 이름으로 지어져요"></label>
+      <label class="field"><span>하늘</span>
+        <select id="skySel">
+          <option value="auto">지금 시각 따라가기</option>
+          <option value="dawn">늘 새벽</option>
+          <option value="day">늘 낮</option>
+          <option value="dusk">늘 노을</option>
+          <option value="night">늘 밤</option>
+        </select>
+      </label>
+      <div class="btns"><button type="button" class="btn" id="editPet">아이들 정보 바꾸기 · 추가하기</button></div>
+      <p class="small" id="saveNote">기록은 이 브라우저에 저장돼요.</p>
+      <div class="care">
+        슬픔이 너무 무겁게 느껴지는 날엔 혼자 버티지 않아도 괜찮아요. 믿을 만한 사람에게 이야기하거나 전문 상담을 받아 보세요.<br>
+        정신건강 상담 <b>1577-0199</b> · 자살예방 상담 <b>109</b> (24시간)
+      </div>
+      <div class="btns"><button type="button" class="btn primary" data-close>닫기</button></div>
+    </div>
+  </div>
+</div>
+
+<script src="./app.js"></script>

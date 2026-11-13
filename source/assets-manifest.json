@@ -1,0 +1,167 @@
+[
+  {
+    "file": "assets/asset-01.png",
+    "mime": "image/png",
+    "bytes": 2559
+  },
+  {
+    "file": "assets/asset-02.png",
+    "mime": "image/png",
+    "bytes": 3681
+  },
+  {
+    "file": "assets/asset-03.woff2",
+    "mime": "font/woff2",
+    "bytes": 504736
+  },
+  {
+    "file": "assets/asset-04.woff2",
+    "mime": "font/woff2",
+    "bytes": 166632
+  },
+  {
+    "file": "assets/asset-05.webp",
+    "mime": "image/webp",
+    "bytes": 397846
+  },
+  {
+    "file": "assets/asset-06.webp",
+    "mime": "image/webp",
+    "bytes": 478906
+  },
+  {
+    "file": "assets/asset-07.webp",
+    "mime": "image/webp",
+    "bytes": 436492
+  },
+  {
+    "file": "assets/asset-08.webp",
+    "mime": "image/webp",
+    "bytes": 400712
+  },
+  {
+    "file": "assets/asset-09.webp",
+    "mime": "image/webp",
+    "bytes": 351906
+  },
+  {
+    "file": "assets/asset-10.webp",
+    "mime": "image/webp",
+    "bytes": 366188
+  },
+  {
+    "file": "assets/asset-11.webp",
+    "mime": "image/webp",
+    "bytes": 326422
+  },
+  {
+    "file": "assets/asset-12.webp",
+    "mime": "image/webp",
+    "bytes": 356380
+  },
+  {
+    "file": "assets/asset-13.webp",
+    "mime": "image/webp",
+    "bytes": 303866
+  },
+  {
+    "file": "assets/asset-14.webp",
+    "mime": "image/webp",
+    "bytes": 344948
+  },
+  {
+    "file": "assets/asset-15.webp",
+    "mime": "image/webp",
+    "bytes": 358048
+  },
+  {
+    "file": "assets/asset-16.webp",
+    "mime": "image/webp",
+    "bytes": 290248
+  },
+  {
+    "file": "assets/asset-17.webp",
+    "mime": "image/webp",
+    "bytes": 322028
+  },
+  {
+    "file": "assets/asset-18.webp",
+    "mime": "image/webp",
+    "bytes": 348330
+  },
+  {
+    "file": "assets/asset-19.webp",
+    "mime": "image/webp",
+    "bytes": 309036
+  },
+  {
+    "file": "assets/asset-20.webp",
+    "mime": "image/webp",
+    "bytes": 308490
+  },
+  {
+    "file": "assets/asset-21.webp",
+    "mime": "image/webp",
+    "bytes": 322682
+  },
+  {
+    "file": "assets/asset-22.webp",
+    "mime": "image/webp",
+    "bytes": 298728
+  },
+  {
+    "file": "assets/asset-23.webp",
+    "mime": "image/webp",
+    "bytes": 347666
+  },
+  {
+    "file": "assets/asset-24.webp",
+    "mime": "image/webp",
+    "bytes": 290258
+  },
+  {
+    "file": "assets/asset-25.webp",
+    "mime": "image/webp",
+    "bytes": 274418
+  },
+  {
+    "file": "assets/asset-26.webp",
+    "mime": "image/webp",
+    "bytes": 344454
+  },
+  {
+    "file": "assets/asset-27.webp",
+    "mime": "image/webp",
+    "bytes": 275588
+  },
+  {
+    "file": "assets/asset-28.webp",
+    "mime": "image/webp",
+    "bytes": 293726
+  },
+  {
+    "file": "assets/asset-29.webp",
+    "mime": "image/webp",
+    "bytes": 118592
+  },
+  {
+    "file": "assets/asset-30.webp",
+    "mime": "image/webp",
+    "bytes": 104806
+  },
+  {
+    "file": "assets/asset-31.webp",
+    "mime": "image/webp",
+    "bytes": 134718
+  },
+  {
+    "file": "assets/asset-32.webp",
+    "mime": "image/webp",
+    "bytes": 138570
+  },
+  {
+    "file": "assets/asset-33.webp",
+    "mime": "image/webp",
+    "bytes": 531594
+  }
+]
