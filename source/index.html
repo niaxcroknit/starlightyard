@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#efe7ef">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="manifest" href="./manifest.webmanifest">
@@ -85,10 +85,10 @@
       </div>
       <div class="field"><span id="breedLabel">고양이 종류</span><div class="breeds" id="breeds"></div></div>
       <fieldset class="date-fields"><legend>우리의 소중한 날</legend>
- <label class="field"><span>처음 만난 날</span><input type="date" id="petMet"></label>
- <label class="field"><span>태어난 날</span><input type="date" id="petBorn"></label>
- <label class="field"><span>별이 된 날 · 선택</span><input type="date" id="petStar"></label></fieldset>
-<label class="field date-legacy"><span>다른 기념일 · 선택</span><input type="date" id="petDay"></label>
+ <div class="field"><span>처음 만난 날</span><input type="hidden" id="petMet"><button type="button" class="date-btn" data-for="petMet" data-label="처음 만난 날"><span class="dv">날짜 고르기</span><svg class="dchev" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
+ <div class="field"><span>태어난 날</span><input type="hidden" id="petBorn"><button type="button" class="date-btn" data-for="petBorn" data-label="태어난 날"><span class="dv">날짜 고르기</span><svg class="dchev" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
+ <div class="field"><span>별이 된 날 · 선택</span><input type="hidden" id="petStar"><button type="button" class="date-btn" data-for="petStar" data-label="별이 된 날"><span class="dv">날짜 고르기</span><svg class="dchev" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div></fieldset>
+<div class="field date-legacy"><span>다른 기념일 · 선택</span><input type="hidden" id="petDay"><button type="button" class="date-btn" data-for="petDay" data-label="다른 기념일"><span class="dv">날짜 고르기</span><svg class="dchev" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
       <label class="field"><span>함께한 시간이나 한마디 (선택)</span><input type="text" id="petMotto" maxlength="40" placeholder="예: 2012–2025 · 창가 낮잠을 제일 좋아했던 아이"></label>
       <div class="field"><span>사진 (선택) · 마당 액자에 걸어 둘게요</span>
         <div class="photo-row"><div class="thumb" id="thumb"></div>
@@ -212,6 +212,7 @@
         </select>
       </label>
       <div class="btns"><button type="button" class="btn" id="editPet">아이들 정보 바꾸기 · 추가하기</button></div>
+      <div class="btns"><button type="button" class="btn" id="guideBtn">사용 방법 다시 보기</button></div>
       <p class="small" id="saveNote">기록은 이 브라우저에 저장돼요.</p>
       <div class="care">
         슬픔이 너무 무겁게 느껴지는 날엔 혼자 버티지 않아도 괜찮아요. 믿을 만한 사람에게 이야기하거나 전문 상담을 받아 보세요.<br>
@@ -219,6 +220,62 @@
       </div>
       <div class="btns"><button type="button" class="btn primary" data-close>닫기</button></div>
     </div>
+  </div>
+</div>
+
+<div class="veil" id="guideVeil" hidden>
+  <div class="sheet px guide" role="dialog" aria-modal="true" aria-labelledby="guideTitle">
+    <div class="g-top"><span class="g-kicker">별빛 마당 사용 방법</span><button type="button" class="g-skip" id="guideSkip">건너뛰기</button></div>
+    <section class="g-page">
+      <div class="g-art g-pat"><span class="g-hand"></span><span class="g-heart h1"></span><span class="g-heart h2"></span><span class="g-heart h3"></span></div>
+      <h2 id="guideTitle">아이를 쓰다듬어 주세요</h2>
+      <p>아이를 <b>톡</b> 누르면 쓰다듬어요.<br>누른 채로 <b>살살 문지르면</b> 눈을 감고 좋아해요.</p>
+    </section>
+    <section class="g-page" hidden>
+      <div class="g-art g-warm"><span class="g-glow a"></span><span class="g-glow b"></span><span class="g-glow c"></span><span class="g-pill">♥ 온기 <b>+1</b></span></div>
+      <h2>반짝이는 빛을 모아요</h2>
+      <p>마당에 떠다니는 빛을 누르면 <b>온기</b>가 쌓여요.<br>낮에는 민들레 씨앗, 밤에는 반딧불이에요.<br>쓰다듬기·밥·공놀이·편지로도 온기가 모여요.</p>
+    </section>
+    <section class="g-page" hidden>
+      <div class="g-art g-deco"><span class="g-item">꽃밭 10</span><span class="g-item">방석 25</span><span class="g-item">등불 45</span><span class="g-item lock">연못 100</span></div>
+      <h2>온기로 마당을 꾸며요</h2>
+      <p>온기가 모이면 장식이 하나씩 열려요.<br>아래 <b>꾸미기</b>에서 놓거나 치울 수 있어요.<br>위쪽 온기 칸에 다음 장식까지 남은 양이 보여요.</p>
+    </section>
+    <section class="g-page" hidden>
+      <ul class="g-list">
+        <li><b>밥 주기</b><span>밥그릇을 채우면 아이들이 와서 먹어요</span></li>
+        <li><b>공놀이</b><span>마당을 누르면 공이 날아가요</span></li>
+        <li><b>별 편지</b><span>하고 싶은 말을 쓰면 하늘에 별이 돼요</span></li>
+        <li><b>쉬어 가기</b><span>1분 같이 숨 쉬기와 아이의 작은 부탁</span></li>
+        <li><b>두 손가락</b><span>마당만 크게 확대해서 볼 수 있어요</span></li>
+      </ul>
+      <h2>천천히, 하고 싶을 때만</h2>
+      <p>매일 오지 않아도 괜찮아요.<br>아이들은 언제든 여기서 반겨 줄 거예요.</p>
+    </section>
+    <div class="g-foot">
+      <button type="button" class="btn" id="guidePrev" hidden>이전</button>
+      <div class="g-dots" id="guideDots" aria-hidden="true"><i class="on"></i><i></i><i></i><i></i></div>
+      <button type="button" class="btn primary" id="guideNext">다음</button>
+    </div>
+  </div>
+</div>
+
+<div class="dp-veil" id="dpVeil" hidden>
+  <div class="dp-sheet" role="dialog" aria-modal="true" aria-labelledby="dpTitle">
+    <div class="dp-grab" aria-hidden="true"></div>
+    <div class="dp-head">
+      <button type="button" class="dp-x" id="dpClose" aria-label="닫기"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      <h2 id="dpTitle">날짜 선택</h2>
+      <button type="button" class="dp-clear" id="dpClear">지우기</button>
+    </div>
+    <div class="dp-month" id="dpMonth">2022년 3월</div>
+    <div class="dp-wheels">
+      <div class="dp-band" aria-hidden="true"></div>
+      <div class="dp-col" id="dpY" tabindex="0" aria-label="연도"></div>
+      <div class="dp-col" id="dpM" tabindex="0" aria-label="월"></div>
+      <div class="dp-col" id="dpD" tabindex="0" aria-label="일"></div>
+    </div>
+    <button type="button" class="dp-ok" id="dpOk">선택</button>
   </div>
 </div>
 

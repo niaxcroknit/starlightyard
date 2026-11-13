@@ -4,6 +4,8 @@
 const RM = matchMedia("(prefers-reduced-motion: reduce)").matches;
 const FONT = '"Segoe UI", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif';
 const $ = (id) => document.getElementById(id);
+let camZ = 1, camX = 0, camY = 0;
+const DP_ROW = 40, DOW = ["일","월","화","수","목","금","토"];
 
 /* ---------- helpers ---------- */
 const HX = new Map();
@@ -673,7 +675,7 @@ const bcv = document.createElement("canvas"), bctx = bcv.getContext("2d");
 let vignette = null;
 let W=0,H=0,DPR=1,P=3,LW=0,LH=0,groundY=0,S=1,dMin=0,dMax=0;
 function resize(){
-  const r = cv.getBoundingClientRect();
+  const r = {width: cv.offsetWidth, height: cv.offsetHeight};
   DPR = Math.min(2, window.devicePixelRatio||1); W = r.width; H = r.height;
   cv.width = Math.round(W*DPR); cv.height = Math.round(H*DPR);
   P = clamp(Math.round(Math.min(W, H*0.9)/190), 2, 5);
@@ -921,7 +923,7 @@ function updateFx(dt){
   sparks = sparks.filter(s => s.t > 0);
   for (const h of hearts){ h.t -= dt; h.y += h.vy*dt; }
   hearts = hearts.filter(h => h.t > 0);
-  if (rising) { rising.t += dt/2.2; if (rising.t >= 1) { bornAt.set(rising.star.id, performance.now()); rising = null; if (lastStar) sparkBurst(lastStar.x*LW*P, lastStar.y*LH*P, "#ffe6a8", 18); sfx("star"); } }
+  if (rising && !rising.hold) { rising.t += dt/2.2; if (rising.t >= 1) { bornAt.set(rising.star.id, performance.now()); rising = null; if (lastStar) sparkBurst(lastStar.x*LW*P, lastStar.y*LH*P, "#ffe6a8", 18); sfx("star"); } }
 }
 function addWarmth(n){
   const before = G.warmth; G.warmth += n;
@@ -983,7 +985,7 @@ function legacyDrawBackdrop(pal, h, t){
     glow(ctx, x, y, 12 + tw*2, "255,226,190", 0.28*a); glow(ctx, x, y, 6 + tw*1.5, "255,240,200", 0.6*a);
     ctx.globalAlpha = a; blit(tw > 0.85 ? BM.twinkle() : BM.star(), x, y - 2); ctx.globalAlpha = 1;
   }
-  if (rising) {
+  if (rising && !rising.hold) {
     const e = 1 - Math.pow(1-rising.t, 3);
     const x = lerp(rising.x0, rising.x1, e)/P, y = (lerp(rising.y0, rising.y1, e) - Math.sin(e*Math.PI)*40*S)/P;
     glow(ctx, x, y, 8, "255,236,180", 0.95); blit(BM.star(), x, y-2);
@@ -1266,7 +1268,7 @@ function frame(now){
 /* ---------- input ---------- */
 cv.addEventListener("pointerdown", (ev) => {
   if (setupOpen) return;
-  const r = cv.getBoundingClientRect(), x = ev.clientX - r.left, y = ev.clientY - r.top;
+  const r = cv.getBoundingClientRect(), x = (ev.clientX - r.left)/camZ, y = (ev.clientY - r.top)/camZ;
   for (const st of G.stars) { if (Math.hypot(st.x*LW*P - x, st.y*LH*P - y) < Math.max(22, 6*P)) { openRead(st.id); return; } }
   for (let i=glows.length-1;i>=0;i--) { if (Math.hypot(glows[i].x - x, glows[i].y - y) < Math.max(26, 7*P)) { collectGlow(i); return; } }
   const byFront = [...ents].sort((a,b) => b.depth - a.depth);
@@ -1293,7 +1295,7 @@ function startStroke(e, ev, x, y){
 }
 cv.addEventListener("pointermove", (ev) => {
   if (!rub || ev.pointerId !== rub.id) return;
-  const r = cv.getBoundingClientRect(), x = ev.clientX - r.left, y = ev.clientY - r.top, d = Math.hypot(x - rub.x, y - rub.y);
+  const r = cv.getBoundingClientRect(), x = (ev.clientX - r.left)/camZ, y = (ev.clientY - r.top)/camZ, d = Math.hypot(x - rub.x, y - rub.y);
   rub.x = x; rub.y = y; rub.dist += d; rub.acc += d;
   const e = rub.e, kk = P*ds(e.depth);
   rub.tx = clamp((x - e.x)/(16*kk), -1, 1); rub.ty = clamp((ey(e) - y)/(30*kk), 0, 1); rub.last = performance.now();
@@ -1350,7 +1352,7 @@ function setHint(msg){ const el = $("hint"); if (!msg) { el.classList.add("off")
 
 /* ---------- sheets ---------- */
 let setupOpen = !G.set, draftFam = [], selIdx = 0;
-function openVeil(id){ $(id).hidden = false; const f = $(id).querySelector("textarea,button.primary"); f && setTimeout(()=>f.focus({preventScroll:true}), 50); }
+function openVeil(id){ if (typeof refreshDateBtns === "function") refreshDateBtns(); $(id).hidden = false; const f = $(id).querySelector("textarea,button.primary"); f && setTimeout(()=>f.focus({preventScroll:true}), 50); }
 function closeVeil(id){ $(id).hidden = true; }
 document.querySelectorAll("[data-close]").forEach(b => b.addEventListener("click", () => closeVeil(b.closest(".veil").id)));
 document.querySelectorAll(".veil").forEach(v => v.addEventListener("pointerdown", (ev) => { if (ev.target === v && v.id !== "setupVeil") closeVeil(v.id); }));
@@ -1381,7 +1383,7 @@ function renderSetup(){
   const p = cur();
   renderFamChips();
   $("petName").value = p.name; $("petName").placeholder = "예: " + (NAMES[selIdx] || "나비"); $("petMotto").value = p.motto || ""; $("petDay").value = p.day || "";
-  renderBreeds(); syncSetup(); syncDayFields();
+  renderBreeds(); syncSetup(); syncDayFields(); refreshDateBtns();
   $("removeRow").hidden = draftFam.length <= 1; $("removeConfirm").hidden = true;
   $("setupTitle").textContent = G.set ? "우리 아이들" : "함께할 아이를 소개해 주세요";
   $("setupLead").hidden = G.set; $("setupCancel").hidden = !G.set; $("setupSubmit").textContent = G.set ? "저장하기" : "마당 열기";
@@ -1437,6 +1439,7 @@ $("setupForm").addEventListener("submit", ev => {
   G.stars.forEach(s => { if (s.to !== "all" && !ids.has(s.to)) s.to = "all"; });
   closeVeil("setupVeil"); $("dock").hidden = false; syncEnts(); recordVisit(); checkSpecial(); renderHud(); save();
   if (first) {
+    setTimeout(openGuide, 700);
     const e0 = ents[0], n0 = G.family[0].name;
     setTimeout(() => say(e0, ents.length > 1 ? "우리 다 같이 왔어!" : `안녕, 나 ${n0}${hasBatchim(n0) ? "이야" : "야"}. 여기 좋다`, 4.5), 500);
     setHint("아이를 살짝 눌러 쓰다듬어 주세요");
@@ -1461,10 +1464,12 @@ $("letterForm").addEventListener("submit", ev => {
   const pos = placeStar();
   const st = {id: "s" + Date.now().toString(36) + Math.random().toString(36).slice(2,6), text, at: Date.now(), x: pos.x, y: pos.y, to: letterTo};
   G.stars.push(st); lastStar = st;
+  const paperRect = $("letterText").getBoundingClientRect();
   $("letterText").value = ""; $("letterCount").textContent = "0"; closeVeil("letterVeil");
   const from = letterTo === "all" ? null : ents.find(e => e.id === letterTo);
   const ox = from ? from.x : W*0.5, oy = from ? ey(from) - 24*P*ds(from.depth) : groundY;
-  rising = {x0: ox, y0: oy, x1: st.x*LW*P, y1: st.y*LH*P, t: 0, star: st};
+  rising = {x0: ox, y0: oy, x1: st.x*LW*P, y1: st.y*LH*P, t: 0, star: st, hold: true};
+  { const rs = rising; flyLetter(paperRect, text, ox*camZ + camX, oy*camZ + camY, rs.x1*camZ + camX, rs.y1*camZ + camY, () => { if (rising === rs) { rs.x0 = rs.x1; rs.y0 = rs.y1; rs.t = 0.72; rs.hold = false; } }); }
   (from ? [from] : ents).forEach(e => { if (!e.target) setState(e, "sit", 5); e.dir = st.x*W >= e.x ? 1 : -1; });
   const speaker = from || pick(ents);
   const rg = findRegret(text);
@@ -1976,7 +1981,7 @@ function drawClayBackground(h,t){
  };
  const now=performance.now();
  for(const st of G.stars){if(rising&&rising.star===st)continue;const born=bornAt.get(st.id),opacity=(.6+.4*NIGHT)*(born?clamp((now-born)/1200,0,1):1);paintStar(st.x*LW*P,st.y*LH*P,P*5,opacity);}
- if(rising){const e=1-Math.pow(1-rising.t,3);paintStar(lerp(rising.x0,rising.x1,e),lerp(rising.y0,rising.y1,e)-Math.sin(e*Math.PI)*40*S,P*5,1);}
+ if(rising&&!rising.hold){const e=1-Math.pow(1-rising.t,3);paintStar(lerp(rising.x0,rising.x1,e),lerp(rising.y0,rising.y1,e)-Math.sin(e*Math.PI)*40*S,P*5,1);}
  mctx.restore();
 }
 function drawRays(t){
@@ -2064,7 +2069,7 @@ function editDayDates(p,kind){
  closeVeil('settingsVeil');
  openSetup();selIdx=Math.max(0,draftFam.findIndex(item=>item.id===p.id));renderSetup();
  const id={met:'petMet',born:'petBorn',star:'petStar',day:'petDay'}[kind]||'petMet';
- $(id).focus({preventScroll:false});$(id).scrollIntoView&&$(id).scrollIntoView({block:'center',behavior:RM?'auto':'smooth'});
+ const b=document.querySelector('.date-btn[data-for="'+id+'"]');if(b){b.scrollIntoView&&b.scrollIntoView({block:'center',behavior:RM?'auto':'smooth'});setTimeout(()=>openDatePicker(id),RM?0:380);}
 }
 function syncDayFields(){
  const p=cur(),dates=petDates(p);$('petBorn').value=dates.born;$('petMet').value=dates.met;$('petStar').value=dates.star;
@@ -2100,6 +2105,7 @@ if (G.set) {
   recordVisit(); setupEnvelope(); checkSpecial();
   setTimeout(() => say(pick(ents), away > 6 ? pick(["왔구나! 반가워","오늘도 와 줘서 고마워"]) : pick(["또 왔네, 좋다","같이 있자"]), 4), 700);
   setHint("아이를 살짝 눌러 쓰다듬어 주세요");
+  if (!G.guideSeen) setTimeout(openGuide, 900);
 } else { openSetup(); $("dock").hidden = true; setHint(""); setTimeout(() => say(ents[0], "안녕!", 3), 900); }
 for (let i=0;i<4;i++) spawnGlow();
 if (document.fonts && document.fonts.load) document.fonts.load(`16px ${FONT}`).catch(()=>{});
@@ -2107,4 +2113,184 @@ initClay();
 initSceneArt();
 initDayWidget();
 requestAnimationFrame(frame);
+
+
+/* ---------- wheel date picker (year · month · day) ---------- */
+let dpState = null;
+const dpDays = (y, m) => new Date(y, m, 0).getDate();
+const dpPad = (n) => String(n).padStart(2, "0");
+function dpLabel(v){ if (!v) return "날짜 고르기"; const [y,m,d] = v.split("-").map(Number); const w = DOW[new Date(y, m-1, d).getDay()]; return `${y}년 ${m}월 ${d}일 (${w})`; }
+function refreshDateBtns(){
+  document.querySelectorAll(".date-btn").forEach(b => { const v = ($(b.dataset.for) || {}).value || ""; b.querySelector(".dv").textContent = dpLabel(v); b.classList.toggle("empty", !v); });
+}
+function dpFill(col, items, sel){
+  col.textContent = "";
+  items.forEach((it, i) => { const d = document.createElement("div"); d.className = "dp-item"; d.textContent = it.label; d.dataset.i = i; d.addEventListener("click", () => col.scrollTo({top: i*DP_ROW, behavior: RM ? "auto" : "smooth"})); col.appendChild(d); });
+  col.scrollTop = sel*DP_ROW; dpMark(col);
+}
+function dpMark(col){ const i = Math.round(col.scrollTop/DP_ROW); col.querySelectorAll(".dp-item").forEach((el, k) => el.classList.toggle("on", k === i)); return i; }
+function dpRead(){
+  const s = dpState, yi = Math.round($("dpY").scrollTop/DP_ROW), mi = Math.round($("dpM").scrollTop/DP_ROW);
+  s.y = s.years[clamp(yi, 0, s.years.length-1)]; s.m = clamp(mi, 0, 11) + 1;
+  const n = dpDays(s.y, s.m), di = Math.round($("dpD").scrollTop/DP_ROW);
+  s.d = clamp(di, 0, $("dpD").children.length - 1) + 1;
+  if ($("dpD").children.length !== n) { s.d = Math.min(s.d, n); dpFill($("dpD"), Array.from({length:n}, (_,i) => ({label:(i+1)+"일"})), s.d-1); }
+  const w = DOW[new Date(s.y, s.m-1, s.d).getDay()];
+  $("dpMonth").textContent = `${s.y}년 ${s.m}월`;
+  $("dpOk").textContent = `${s.m}월 ${s.d}일(${w}) 선택`;
+}
+function openDatePicker(id){
+  const input = $(id), btn = document.querySelector('.date-btn[data-for="'+id+'"]'); if (!input) return;
+  const now = new Date(), maxY = now.getFullYear(), years = []; for (let y = 1985; y <= maxY; y++) years.push(y);
+  let y = maxY, m = now.getMonth()+1, d = now.getDate();
+  if (input.value) { const a = input.value.split("-").map(Number); if (a[0]) { y = a[0]; m = a[1]; d = a[2]; } }
+  if (!years.includes(y)) years.push(y), years.sort((a,b) => a-b);
+  dpState = {id, years, y, m, d, btn};
+  $("dpTitle").textContent = (btn && btn.dataset.label) || "날짜 선택";
+  $("dpClear").hidden = !input.value;
+  $("dpVeil").hidden = false;
+  requestAnimationFrame(() => {
+    dpFill($("dpY"), years.map(v => ({label: v+"년"})), years.indexOf(y));
+    dpFill($("dpM"), Array.from({length:12}, (_,i) => ({label:(i+1)+"월"})), m-1);
+    dpFill($("dpD"), Array.from({length:dpDays(y,m)}, (_,i) => ({label:(i+1)+"일"})), d-1);
+    dpRead(); $("dpVeil").classList.add("on"); $("dpOk").focus({preventScroll:true});
+  });
+}
+function closeDatePicker(){ $("dpVeil").classList.remove("on"); $("dpVeil").hidden = true; const b = dpState && dpState.btn; dpState = null; if (b) b.focus({preventScroll:true}); }
+function dpCommit(value){
+  const input = $(dpState.id); input.value = value; input.dispatchEvent(new Event("input", {bubbles:true})); refreshDateBtns(); closeDatePicker();
+}
+["dpY","dpM","dpD"].forEach(id => {
+  const col = $(id); let t = null;
+  col.addEventListener("scroll", () => { dpMark(col); clearTimeout(t); t = setTimeout(() => { if (dpState) dpRead(); }, 90); }, {passive:true});
+  col.addEventListener("keydown", (ev) => { if (ev.key !== "ArrowUp" && ev.key !== "ArrowDown") return; ev.preventDefault(); const i = Math.round(col.scrollTop/DP_ROW) + (ev.key === "ArrowDown" ? 1 : -1); col.scrollTo({top: Math.max(0, i)*DP_ROW, behavior: RM ? "auto" : "smooth"}); });
+});
+$("dpOk").addEventListener("click", () => { if (!dpState) return; dpRead(); const s = dpState; dpCommit(`${s.y}-${dpPad(s.m)}-${dpPad(s.d)}`); });
+$("dpClear").addEventListener("click", () => { if (dpState) dpCommit(""); });
+$("dpClose").addEventListener("click", closeDatePicker);
+$("dpVeil").addEventListener("pointerdown", (ev) => { if (ev.target === $("dpVeil")) closeDatePicker(); });
+document.addEventListener("keydown", (ev) => { if (ev.key === "Escape" && dpState) { ev.stopPropagation(); closeDatePicker(); } }, true);
+document.querySelectorAll(".date-btn").forEach(b => b.addEventListener("click", () => openDatePicker(b.dataset.for)));
+refreshDateBtns();
+
+/* ---------- star letter: fold into a paper plane and fly up ---------- */
+function flyLetter(rect, text, ox, oy, tx, ty, done){
+  const stage = document.querySelector(".stage"), sr = stage.getBoundingClientRect();
+  if (RM || !rect || !rect.width) { setTimeout(done, 300); return; }
+  const wrap = document.createElement("div"); wrap.className = "fly-wrap"; wrap.setAttribute("aria-hidden", "true");
+  const paper = document.createElement("div"); paper.className = "fly-paper";
+  const body = document.createElement("div"); body.className = "fly-text"; body.textContent = text; paper.appendChild(body);
+  const fl = document.createElement("i"); fl.className = "fly-flap l"; const fr2 = document.createElement("i"); fr2.className = "fly-flap r";
+  const crease = document.createElement("i"); crease.className = "fly-crease";
+  paper.append(fl, fr2, crease); wrap.appendChild(paper); stage.appendChild(wrap);
+  const x0 = rect.left - sr.left, y0 = rect.top - sr.top, w0 = rect.width, h0 = rect.height;
+  const pw = 150, ph = 190, cx = sr.width/2, cy = Math.min(sr.height*0.46, y0 + h0/2);
+  Object.assign(paper.style, {left: x0+"px", top: y0+"px", width: w0+"px", height: h0+"px"});
+  const ease = "cubic-bezier(.4,0,.2,1)";
+  // 1) lift into a sheet of paper
+  const a1 = paper.animate([
+    {left: x0+"px", top: y0+"px", width: w0+"px", height: h0+"px", borderRadius: "14px", transform: "rotate(0deg)"},
+    {left: (cx-pw/2)+"px", top: (cy-ph/2)+"px", width: pw+"px", height: ph+"px", borderRadius: "6px", transform: "rotate(-4deg)"}
+  ], {duration: 420, easing: ease, fill: "forwards"});
+  a1.onfinish = () => {
+    body.animate([{opacity: 1}, {opacity: .25}], {duration: 300, fill: "forwards"});
+    // 2) the two top corners fold down to the centre line
+    fl.animate([{transform: "rotateY(0deg)", opacity: 0}, {transform: "rotateY(0deg)", opacity: 1, offset: .15}, {transform: "rotateY(180deg)", opacity: 1}], {duration: 460, easing: ease, fill: "forwards"});
+    const a2 = fr2.animate([{transform: "rotateY(0deg)", opacity: 0}, {transform: "rotateY(0deg)", opacity: 1, offset: .15}, {transform: "rotateY(-180deg)", opacity: 1}], {duration: 460, delay: 120, easing: ease, fill: "forwards"});
+    paper.animate([{clipPath: "polygon(0 0,100% 0,100% 100%,0 100%)"}, {clipPath: "polygon(50% 0,100% 39%,100% 100%,0 100%,0 39%)"}], {duration: 460, delay: 120, easing: ease, fill: "forwards"});
+    a2.onfinish = () => {
+      // 3) fold in half and turn into a plane
+      const a3 = paper.animate([
+        {transform: "rotate(-4deg) scaleX(1)", opacity: 1},
+        {transform: "rotate(-30deg) scaleX(.18) scaleY(.75)", opacity: 0}
+      ], {duration: 300, easing: "ease-in", fill: "forwards"});
+      const plane = document.createElement("div"); plane.className = "fly-plane";
+      plane.innerHTML = '<svg viewBox="0 0 64 44"><path d="M62 4 2 20l20 7z" fill="#fffaf4"/><path d="M62 4 22 27l4 15 8-10z" fill="#efdfe7"/><path d="M62 4 22 27l12 5z" fill="#e4cfdb"/><path d="M62 4 2 20" stroke="#e9a7ba" stroke-width="1.6"/><circle cx="20" cy="21" r="1.8" fill="#e9a7ba"/></svg>';
+      wrap.appendChild(plane);
+      const px0 = cx, py0 = cy, c1x = (ox + cx)/2, c1y = Math.max(py0, oy) + 30, c2x = (tx + ox)/2 - 30, c2y = (ty + oy)/2 - 60;
+      const T = 1700, t0 = performance.now(); let lastDot = 0, prev = [px0, py0];
+      plane.animate([{opacity: 0, transform: "translate(-50%,-50%) scale(.6)"}, {opacity: 1, transform: "translate(-50%,-50%) scale(1)"}], {duration: 220, fill: "forwards"});
+      const step = (now) => {
+        const u = Math.min(1, (now - t0)/T), e = u < .5 ? 2*u*u : 1 - Math.pow(-2*u + 2, 2)/2, v = 1 - e;
+        const x = v*v*v*px0 + 3*v*v*e*c1x + 3*v*e*e*c2x + e*e*e*tx, y = v*v*v*py0 + 3*v*v*e*c1y + 3*v*e*e*c2y + e*e*e*ty + Math.sin(u*Math.PI*3)*6*(1-u);
+        const ang = Math.atan2(y - prev[1], x - prev[0]); prev = [x, y];
+        const sc = 1 - .55*e;
+        plane.style.left = x + "px"; plane.style.top = y + "px";
+        plane.firstChild.style.transform = `rotate(${ang}rad) scale(${sc})`;
+        if (now - lastDot > 55 && u < .96) { lastDot = now; const dot = document.createElement("i"); dot.className = "fly-dot"; dot.style.left = x + "px"; dot.style.top = y + "px"; wrap.appendChild(dot); dot.animate([{opacity: .9, transform: "translate(-50%,-50%) scale(1)"}, {opacity: 0, transform: "translate(-50%,-50%) scale(.3)"}], {duration: 900, fill: "forwards"}).onfinish = () => dot.remove(); }
+        if (u < 1) requestAnimationFrame(step);
+        else { plane.animate([{opacity: 1}, {opacity: 0, transform: "translate(-50%,-50%) scale(.2)"}], {duration: 260, fill: "forwards"}).onfinish = () => wrap.remove(); done(); }
+      };
+      a3.onfinish = () => paper.remove();
+      requestAnimationFrame(step);
+    };
+  };
+}
+
+
+/* ---------- pinch to zoom the yard only (menus stay the same size) ---------- */
+(() => {
+  const stage = document.querySelector(".stage"), ptrs = new Map(); let pinch = null, settle = null;
+  function applyCam(){
+    const w = cv.offsetWidth, h = cv.offsetHeight;
+    camZ = clamp(camZ, 1, 2.6); camX = clamp(camX, w - w*camZ, 0); camY = clamp(camY, h - h*camZ, 0);
+    cv.style.transformOrigin = "0 0";
+    cv.style.transform = camZ === 1 ? "" : `translate(${camX}px,${camY}px) scale(${camZ})`;
+  }
+  function zoomAt(cx, cy, z){
+    const sr = stage.getBoundingClientRect(), px = cx - sr.left, py = cy - sr.top;
+    const sx = (px - camX)/camZ, sy = (py - camY)/camZ;
+    camZ = clamp(z, 1, 2.6); camX = px - sx*camZ; camY = py - sy*camZ; applyCam();
+  }
+  function relax(){
+    if (camZ > 1.06) return;
+    cancelAnimationFrame(settle);
+    const z0 = camZ, x0 = camX, y0 = camY, t0 = performance.now();
+    const step = (now) => { const u = Math.min(1, (now - t0)/180); camZ = z0 + (1 - z0)*u; camX = x0*(1-u); camY = y0*(1-u); applyCam(); if (u < 1) settle = requestAnimationFrame(step); };
+    settle = requestAnimationFrame(step);
+  }
+  const mid = () => { const a = [...ptrs.values()]; return {x: (a[0].x + a[1].x)/2, y: (a[0].y + a[1].y)/2, d: Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y) || 1}; };
+  stage.addEventListener("pointerdown", (ev) => {
+    if (ev.target !== cv || ev.pointerType === "mouse") return;
+    ptrs.set(ev.pointerId, {x: ev.clientX, y: ev.clientY});
+    if (ptrs.size >= 2) {
+      ev.stopPropagation();
+      if (typeof rub !== "undefined" && rub) { rub = null; if (typeof purrStop === "function") purrStop(); }
+      const m = mid(); pinch = {d0: m.d, z0: camZ, mx: m.x, my: m.y};
+    }
+  }, true);
+  stage.addEventListener("pointermove", (ev) => {
+    if (!ptrs.has(ev.pointerId)) return;
+    ptrs.set(ev.pointerId, {x: ev.clientX, y: ev.clientY});
+    if (pinch && ptrs.size >= 2) {
+      ev.stopPropagation();
+      const m = mid();
+      zoomAt(pinch.mx, pinch.my, pinch.z0*m.d/pinch.d0);
+      camX += m.x - pinch.mx; camY += m.y - pinch.my; pinch.mx = m.x; pinch.my = m.y; pinch.d0 = m.d; pinch.z0 = camZ; applyCam();
+    }
+  }, true);
+  const up = (ev) => { if (!ptrs.delete(ev.pointerId)) return; if (pinch) ev.stopPropagation(); if (ptrs.size < 2) { if (pinch) relax(); pinch = null; } };
+  stage.addEventListener("pointerup", up, true); stage.addEventListener("pointercancel", up, true);
+  // trackpad pinch / ctrl + wheel on desktop
+  stage.addEventListener("wheel", (ev) => { if (!ev.ctrlKey) return; ev.preventDefault(); zoomAt(ev.clientX, ev.clientY, camZ*Math.exp(-ev.deltaY*0.01)); clearTimeout(stage._rz); stage._rz = setTimeout(relax, 200); }, {passive: false});
+  // stop the browser from zooming the whole page (Safari gesture events)
+  ["gesturestart","gesturechange","gestureend"].forEach(t => document.addEventListener(t, (ev) => ev.preventDefault(), {passive: false}));
+  window.addEventListener("resize", applyCam);
+})();
+
+/* ---------- how-to guide (first visit, and from settings) ---------- */
+let guidePage = 0;
+function renderGuide(){
+  document.querySelectorAll("#guideVeil .g-page").forEach((el, i) => { el.hidden = i !== guidePage; });
+  document.querySelectorAll("#guideDots i").forEach((el, i) => el.classList.toggle("on", i === guidePage));
+  const last = guidePage === document.querySelectorAll("#guideVeil .g-page").length - 1;
+  $("guideNext").textContent = last ? "마당으로 가기" : "다음";
+  $("guidePrev").hidden = guidePage === 0;
+}
+function openGuide(){ guidePage = 0; renderGuide(); closeVeil("settingsVeil"); openVeil("guideVeil"); }
+function closeGuide(){ closeVeil("guideVeil"); if (!G.guideSeen) { G.guideSeen = true; save(); } }
+$("guideNext").addEventListener("click", () => { const n = document.querySelectorAll("#guideVeil .g-page").length; if (guidePage >= n - 1) closeGuide(); else { guidePage++; renderGuide(); } });
+$("guidePrev").addEventListener("click", () => { if (guidePage > 0) { guidePage--; renderGuide(); } });
+$("guideSkip").addEventListener("click", closeGuide);
+$("guideBtn").addEventListener("click", openGuide);
 })();
