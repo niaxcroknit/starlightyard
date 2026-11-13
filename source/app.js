@@ -872,7 +872,26 @@ function updateBall(dt){
     if (ball.p >= 1) { ball.state = "ground"; ball.bounce = 1; }
   } else if (ball.state === "ground") {
     ball.bounce = Math.max(0, ball.bounce - dt*1.6); ball.alt = Math.abs(Math.sin(ball.bounce*9))*ball.bounce*8*P; ball.y = groundY + ball.td;
-  } else if (ball.state === "drop") { ball.fade -= dt*0.8; if (ball.fade <= 0) ball = null; }
+    ball.groundT = (ball.groundT || 0) + dt;
+    // nobody is on the way (a tap, meal or petting changed their plan): send the nearest pet again
+    if (ball.groundT > 2.5 && !ents.some(e => e.target && e.onArrive)) {
+      const near = ents.filter(e => e.state !== "eat").sort((a,b) => Math.hypot(a.x - ball.x, a.depth - ball.td) - Math.hypot(b.x - ball.x, b.depth - ball.td))[0];
+      if (near) { if (near.state === "sleep") setState(near, "idle"); goTo(near, ball.x, ball.td, true, () => pickBall(near)); }
+      ball.groundT = 0.5;
+    }
+    if ((ball.age || 0) > 20) ballFade();
+  } else if (ball.state === "carried") {
+    ball.carryT = (ball.carryT || 0) + dt;
+    const c = ball.by;
+    // the carrier lost its way back (petted, fed, removed...): let the ball go where it is
+    if (!c || !ents.includes(c) || (ball.carryT > 1 && !(c.target && c.onArrive))) { if (c) c.carry = false; ballFade(c); }
+  } else if (ball.state === "drop") { ball.fade -= dt*0.8; if (ball.fade <= 0) { ents.forEach(e => e.carry = false); ball = null; } }
+  if (ball) { ball.age = (ball.age || 0) + dt; if (ball.age > 40) ballFade(); }
+}
+function ballFade(e){
+  if (!ball || ball.state === "drop") return;
+  if (e && ents.includes(e)) { ball.x = e.x + e.dir*14*P*ds(e.depth); ball.y = ey(e); ball.td = e.depth; }
+  ball.state = "drop"; ball.alt = 0; ball.fade = 1; ball.by = null; ents.forEach(x => x.carry = false);
 }
 
 /* treats: one for each pet */
