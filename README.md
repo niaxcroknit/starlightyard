@@ -30,7 +30,7 @@ npm run build  # 그림·폰트를 모두 넣은 단일 파일 source/dist/starl
 | `previews/` | 동물·걷기·마당 미리보기 |
 | `reference/` | 승인된 동물 그림체, 이전 인수인계 문서, 수정 전 캡처 |
 | `HANDOFF.md` | 현재 상태와 확정된 원칙 — **작업 전에 먼저 읽어 주세요** |
-| `CLAUDE_PROMPT.md` | AI 도구에 작업을 넘길 때 쓰는 전달 문구 |
+| `CODEX_PROMPT.md` | 코덱스에 작업을 넘길 때 붙여 넣는 전달 문구 |
 
 ## 저장
 
