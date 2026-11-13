@@ -213,6 +213,20 @@
       </label>
       <div class="btns"><button type="button" class="btn" id="editPet">아이들 정보 바꾸기 · 추가하기</button></div>
       <div class="btns"><button type="button" class="btn" id="guideBtn">사용 방법 다시 보기</button></div>
+      <section class="backup" aria-labelledby="backupTitle">
+        <h3 id="backupTitle">백업 · 옮기기</h3>
+        <p class="small">아이 정보·사진·별 편지·꾸민 마당을 파일 하나로 저장해요. 휴대폰을 바꾸거나 다른 브라우저로 옮길 때 그 파일을 불러오면 그대로 이어져요. 파일은 나만 보관해요.</p>
+        <div class="btns">
+          <button type="button" class="btn" id="backupSave">백업 파일 저장</button>
+          <label class="btn" id="backupLoadLabel" for="backupFile">백업 불러오기</label>
+          <input type="file" id="backupFile" accept="application/json,.json" class="sr">
+        </div>
+        <p class="small backup-last" id="backupLast"></p>
+        <div class="backup-confirm" id="backupConfirm" hidden>
+          <p id="backupConfirmText"></p>
+          <div class="btns"><button type="button" class="btn" id="backupNo">그만둘게요</button><button type="button" class="btn primary" id="backupYes">불러오기</button></div>
+        </div>
+      </section>
       <p class="small" id="saveNote">기록은 이 브라우저에 저장돼요.</p>
       <div class="care">
         슬픔이 너무 무겁게 느껴지는 날엔 혼자 버티지 않아도 괜찮아요. 믿을 만한 사람에게 이야기하거나 전문 상담을 받아 보세요.<br>

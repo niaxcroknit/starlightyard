@@ -2299,4 +2299,62 @@ $("guideNext").addEventListener("click", () => { const n = document.querySelecto
 $("guidePrev").addEventListener("click", () => { if (guidePage > 0) { guidePage--; renderGuide(); } });
 $("guideSkip").addEventListener("click", closeGuide);
 $("guideBtn").addEventListener("click", openGuide);
+
+/* ---------- backup file: save everything to one file, load it on another phone ---------- */
+const BACKUP_APP = "starlight-yard";
+let pendingBackup = null;
+const fmtStamp = (t) => { const d = new Date(t); return `${d.getFullYear()}.${d.getMonth()+1}.${d.getDate()}`; };
+function renderBackup(){
+  const n = G.family.length, st = G.stars.length, ph = G.family.filter(p => p.photo).length;
+  $("backupLast").textContent = (G.lastBackup ? `마지막 백업 ${fmtStamp(G.lastBackup)} · ` : "아직 백업한 적이 없어요 · ") + `아이 ${n} · 별 편지 ${st}` + (ph ? ` · 사진 ${ph}` : "");
+}
+async function saveBackup(){
+  const now = new Date(), name = `별빛마당-백업-${now.getFullYear()}${dpPad(now.getMonth()+1)}${dpPad(now.getDate())}.json`;
+  const text = JSON.stringify({app: BACKUP_APP, version: 1, exportedAt: now.toISOString(), data: G});
+  const blob = new Blob([text], {type: "application/json"});
+  let ok = false;
+  try {
+    const dl = window.claude && window.claude.use ? await window.claude.use("downloads") : null;
+    if (dl) { await dl.save({filename: name, data: blob}); ok = true; }
+  } catch (e) { if (e && e.code === "declined") return; }
+  if (!ok) {
+    try {
+      const file = new File([blob], name, {type: "application/json"});
+      if (navigator.canShare && navigator.canShare({files: [file]}) && /iPhone|iPad|Android/i.test(navigator.userAgent)) { await navigator.share({files: [file], title: "별빛 마당 백업"}); ok = true; }
+    } catch (e) { if (e && e.name === "AbortError") return; }
+  }
+  if (!ok) {
+    try { const url = URL.createObjectURL(blob), a = document.createElement("a"); a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 4000); ok = true; } catch (e) {}
+  }
+  if (ok) { G.lastBackup = Date.now(); save(); renderBackup(); toast("백업 파일을 저장했어요"); }
+  else toast("이 화면에서는 파일을 저장할 수 없어요. 사파리나 크롬에서 열어 주세요");
+}
+function readBackup(file){
+  if (!file) return;
+  const fr = new FileReader();
+  fr.onload = () => {
+    let obj = null; try { obj = JSON.parse(fr.result); } catch (e) {}
+    const data = obj && obj.app === BACKUP_APP ? obj.data : (obj && obj.family ? obj : null);
+    if (!data || !Array.isArray(data.family) || !data.family.length) { toast("별빛 마당 백업 파일이 아니에요"); return; }
+    pendingBackup = data;
+    const when = obj.exportedAt ? fmtStamp(obj.exportedAt) + "에 만든 " : "";
+    $("backupConfirmText").textContent = `${when}백업이에요. 아이 ${data.family.length}마리(${data.family.map(p => p.name).join(", ")}), 별 편지 ${(data.stars||[]).length}개가 들어 있어요. 불러오면 지금 마당이 이 내용으로 바뀌어요.`;
+    $("backupConfirm").hidden = false;
+  };
+  fr.onerror = () => toast("파일을 읽지 못했어요. 다시 골라 주세요");
+  fr.readAsText(file);
+}
+function applyBackup(){
+  if (!pendingBackup) return;
+  G = Object.assign(JSON.parse(JSON.stringify(SAMPLE)), JSON.parse(JSON.stringify(pendingBackup)));
+  G.set = true; G.guideSeen = true; normalize(); pendingBackup = null;
+  save(); flush();
+  toast("백업을 불러왔어요");
+  setTimeout(() => location.reload(), 900);
+}
+$("backupSave").addEventListener("click", saveBackup);
+$("backupFile").addEventListener("change", (ev) => { readBackup(ev.target.files && ev.target.files[0]); ev.target.value = ""; });
+$("backupYes").addEventListener("click", applyBackup);
+$("backupNo").addEventListener("click", () => { pendingBackup = null; $("backupConfirm").hidden = true; });
+$("settingsBtn").addEventListener("click", () => { $("backupConfirm").hidden = true; renderBackup(); });
 })();
