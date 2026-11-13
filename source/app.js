@@ -1163,7 +1163,14 @@ function drawScene(t){
   for (const tr of treats) if (tr.landed) items.push({d: tr.d, fn: () => drawTreatM(tr)});
   bowlHit = null; poopHits = [];
   { const d = bowlD(), x = bowlX(); items.push({d, fn: () => { const k = decK(d), img = BM.bowl(bowl.full ? 1 : 0); softShadow(x, groundY + d, 7*k, 1.6*k, 0.28); drawArtImage(mctx,img, Math.round(x - img.width*k/2), Math.round(groundY + d - img.height*k), Math.round(img.width*k), Math.round(img.height*k)); bowlHit = {x: x - 10*k, y: groundY + d - 12*k, w: 20*k, h: 16*k}; }}); }
-  for (const pp of poops) items.push({d: pp.d, fn: () => { const k = decK(pp.d)*(pp.pop < 1 ? 0.4 + pp.pop*0.6 : 1), img = BM.poop(); softShadow(pp.x, groundY + pp.d, 4*k, 1*k, 0.25); drawArtImage(mctx,img, Math.round(pp.x - img.width*k/2), Math.round(groundY + pp.d - img.height*k), Math.round(img.width*k), Math.round(img.height*k)); poopHits.push({pp, x: pp.x, y: groundY + pp.d - 4*k, r: Math.max(24, 9*k)}); }});
+  for (const pp of poops) items.push({d: pp.d, fn: () => {
+    const k = decK(pp.d)*(pp.pop < 1 ? 0.4 + pp.pop*0.6 : 1), img = BM.poop(), foot = groundY + pp.d, pw = img.width*k, ph = img.height*k;
+    if (pp.cl == null) {
+      softShadow(pp.x, foot, 4*k, 1*k, 0.25); drawArtImage(mctx,img, Math.round(pp.x - pw/2), Math.round(foot - ph), Math.round(pw), Math.round(ph));
+      poopHits.push({pp, x: pp.x, y: foot - 4*k, r: Math.max(24, 9*k)}); return;
+    }
+    drawScoopClean(pp, img, k, foot, pw, ph);
+  }});
   if (has("fence")) items.push({d: dMin - 3, fn: () => drawFence() });
   if (has("mailbox")) { const d = dMin + 4, x = W*0.66; items.push({d, fn: () => { const k = decK(d); softShadow(x, groundY + d, 5*k, 1.3*k, 0.26); place(mailboxDec(), x, groundY + d, k); }}); }
   if (has("pond")) { const d = dMin + (dMax - dMin)*0.62, x = W*0.82; items.push({d: d - 8, fn: () => { const k = decK(d); place(pondDec(Math.floor(t*1.5) % 2), x, groundY + d, k); }}); }
@@ -1263,6 +1270,7 @@ function frame(now){
   if (!setupOpen) { updateBall(dt); updateTreats(dt); }
   updateGlows(dt); updateFx(dt); updateClouds(dt); updatePetals(dt);
   for (const pp of poops) pp.pop = Math.min(1, pp.pop + dt*3);
+  updateScoops(dt);
   if (bubble) { bubble.t -= dt; if (bubble.t <= 0) bubble = null; }
   else { bubbleCooldown -= dt; if (bubbleCooldown <= 0) idleLine(); }
   if (has("tree") && soundOn) { chimeT -= dt; if (chimeT <= 0) { chimeT = rand(14, 30); sfx("chime"); } }
@@ -1586,8 +1594,70 @@ function spawnPoop(e){
   if (!bubble && Math.random() < 0.5) say(e, pick(["앗… 실례했어","헤헤, 치워 줄 거지?","뿌듯하다!"]));
 }
 function cleanPoop(pp){
+  if (pp.cl != null) return;
+  pp.cl = 0; pp.sand = []; sfx("throw");
+  if (RM) pp.cl = SCOOP_T - 0.05;
+}
+const SCOOP_T = 1.7;
+function updateScoops(dt){
+  for (const pp of poops) {
+    if (pp.cl == null) continue;
+    const prev = pp.cl; pp.cl += dt;
+    const k = P*ds(pp.d);
+    if (pp.cl > 0.72 && pp.cl < 1.25 && Math.random() < 0.85) for (let i=0;i<2;i++) pp.sand.push({x: pp.x + rand(-7,7)*k, y: groundY + pp.d - 13*k + rand(-2,2)*k, vy: rand(10,40), t: rand(.45,.8), c: pick(["#b39a7a","#c9b28f","#9f8667","#d8c6a6"])});
+    for (const g of pp.sand) { g.t -= dt; g.vy += 260*dt; g.y += g.vy*dt; }
+    pp.sand = pp.sand.filter(g => g.t > 0 && g.y < groundY + pp.d + 2);
+    if (prev < 0.7 && pp.cl >= 0.7) sfx("treat");
+    if (pp.cl >= SCOOP_T) finishPoop(pp);
+  }
+}
+function drawScoopClean(pp, img, k, foot, pw, ph){
+  const t = pp.cl, ez = (u) => u < 0 ? 0 : u > 1 ? 1 : u*u*(3 - 2*u);
+  const a1 = ez(t/0.3), a2 = ez((t - 0.3)/0.38), a3 = ez((t - 0.72)/0.45), a4 = ez((t - 1.22)/0.45);
+  const sc = 0.2*k, panX = pp.x - pw*0.12, startX = panX - 34*k;
+  const x = startX + (panX - startX)*a2 + 4*k*a4, lift = 15*k*a3 + 10*k*a4, tilt = -0.05 - 0.17*a3 - 0.2*a4;
+  const y = foot - 2*k - lift, alpha = a1*(1 - a4), size = 1 - 0.45*a4;
+  // ground shadow under scoop
+  softShadow(x - 4*k, foot + k*0.5, 13*k*(1 - 0.3*a3), 2*k, 0.22*alpha);
+  if (a3 < 0.05 && a4 === 0) { softShadow(pp.x, foot, 4*k, 1*k, 0.25); }
+  mctx.save(); mctx.globalAlpha = alpha; mctx.translate(x, y); mctx.rotate(tilt); mctx.scale(size, size);
+  drawScoop(mctx, sc);
+  mctx.restore();
+  // the poop: on the grass until the pan slides under, then rides in it
+  mctx.save(); mctx.globalAlpha = 1 - a4;
+  if (a3 <= 0 && t < 0.72) { drawArtImage(mctx, img, Math.round(pp.x - pw/2), Math.round(foot - ph), Math.round(pw), Math.round(ph)); }
+  else { mctx.translate(x + pw*0.12, y - 1*k); mctx.rotate(tilt); mctx.scale(size, size); drawArtImage(mctx, img, -pw/2, -ph, pw, ph); }
+  mctx.restore();
+  for (const g of pp.sand) { mctx.globalAlpha = Math.min(1, g.t*2); mctx.fillStyle = g.c; mctx.beginPath(); mctx.arc(g.x, g.y, Math.max(1, 0.55*k), 0, Math.PI*2); mctx.fill(); }
+  mctx.globalAlpha = 1;
+  if (a4 > 0) for (let i=0;i<6;i++) { const ang = i*1.05 + t*3, r = (6 + 10*a4)*k; const sx2 = x + Math.cos(ang)*r, sy2 = y - 6*k + Math.sin(ang)*r*0.7, ss = (1.6 - a4)*k; mctx.globalAlpha = 1 - a4*0.7; mctx.fillStyle = "#fffbe8"; mctx.beginPath(); mctx.moveTo(sx2, sy2 - ss); mctx.quadraticCurveTo(sx2, sy2, sx2 + ss, sy2); mctx.quadraticCurveTo(sx2, sy2, sx2, sy2 + ss); mctx.quadraticCurveTo(sx2, sy2, sx2 - ss, sy2); mctx.quadraticCurveTo(sx2, sy2, sx2, sy2 - ss); mctx.fill(); }
+  mctx.globalAlpha = 1;
+}
+/* clay litter scoop, pan pointing right; origin = centre of the pan floor */
+function drawScoop(c, s){
+  c.save(); c.scale(s, s);
+  const hi = "#d8eef9", base = "#a9d3ea", lo = "#7fb3d1", rim = "#c4e3f4";
+  const rrp = (x,y,w,h,r) => { const p = new Path2D(); p.roundRect(x,y,w,h,r); return p; };
+  c.save(); c.shadowColor = "rgba(60,80,100,.22)"; c.shadowBlur = 8; c.shadowOffsetY = 5;
+  let g = c.createLinearGradient(0,-7,0,7); g.addColorStop(0,hi); g.addColorStop(.5,base); g.addColorStop(1,lo);
+  c.fillStyle = g; c.fill(rrp(-118,-7,82,14,7)); c.restore();
+  c.fillStyle = "rgba(90,130,160,.45)"; c.fill(rrp(-100,-3,14,6,3));
+  g = c.createRadialGradient(-122,-4,1,-120,0,13); g.addColorStop(0,hi); g.addColorStop(1,lo);
+  c.fillStyle = g; c.beginPath(); c.arc(-120,0,12,0,Math.PI*2); c.fill();
+  c.fillStyle = "rgba(255,255,255,.55)"; c.beginPath(); c.arc(-124,-4,3.4,0,Math.PI*2); c.fill();
+  c.save(); c.shadowColor = "rgba(60,80,100,.22)"; c.shadowBlur = 12; c.shadowOffsetY = 6;
+  const pan = new Path2D(); pan.moveTo(-40,-26); pan.lineTo(40,-34); pan.quadraticCurveTo(52,-34,52,-22); pan.lineTo(52,22); pan.quadraticCurveTo(52,34,40,34); pan.lineTo(-40,26); pan.quadraticCurveTo(-46,26,-46,18); pan.lineTo(-46,-18); pan.quadraticCurveTo(-46,-26,-40,-26); pan.closePath();
+  g = c.createLinearGradient(-46,-34,52,34); g.addColorStop(0,hi); g.addColorStop(.55,base); g.addColorStop(1,lo);
+  c.fillStyle = g; c.fill(pan); c.restore();
+  const fl = new Path2D(); fl.moveTo(-34,-19); fl.lineTo(40,-26); fl.quadraticCurveTo(45,-26,45,-20); fl.lineTo(45,20); fl.quadraticCurveTo(45,26,40,26); fl.lineTo(-34,19); fl.quadraticCurveTo(-38,19,-38,15); fl.lineTo(-38,-15); fl.quadraticCurveTo(-38,-19,-34,-19); fl.closePath();
+  g = c.createLinearGradient(0,-26,0,26); g.addColorStop(0,"#9ccbe5"); g.addColorStop(1,"#b9def0"); c.fillStyle = g; c.fill(fl);
+  for (let rI=0;rI<4;rI++) for (let cI=0;cI<5;cI++){ const px = -26 + cI*14, py = -15 + rI*10 + cI*0.35; c.fillStyle = "rgba(70,110,140,.42)"; c.fill(rrp(px,py,9,4.4,2.2)); c.fillStyle = "rgba(255,255,255,.35)"; c.fill(rrp(px+1,py+3.6,7,1,.5)); }
+  c.strokeStyle = rim; c.lineWidth = 2.4; c.lineCap = "round"; c.beginPath(); c.moveTo(-42,-24); c.lineTo(40,-32); c.quadraticCurveTo(50,-32,50,-22); c.stroke();
+  c.restore();
+}
+function finishPoop(pp){
   poops = poops.filter(q => q !== pp);
-  sparkBurst(pp.x, groundY + pp.d - 6*P, "#ffffff", 12); sfx("glow"); addWarmth(1); save();
+  sparkBurst(pp.x, groundY + pp.d - 14*P*ds(pp.d), "#ffffff", 12); sfx("glow"); addWarmth(1); save();
   const e = [...ents].sort((a,b) => Math.abs(a.x - pp.x) - Math.abs(b.x - pp.x))[0];
   if (e && !bubble && Math.random() < 0.6) { e.happy = 1.2; say(e, pick(["고마워! 깨끗해졌다","역시 최고야","치워 줘서 고마워"])); }
 }
@@ -2115,9 +2185,7 @@ function afterLoad(){ if (G.set && setupOpen && $("setupCancel").hidden) { setup
 window.addEventListener("resize", resize);
 { // keep the canvas matched to the real visible screen (Safari toolbars, rotation, keyboard)
   const fitVisible = () => {
-    const vv = window.visualViewport;
-    const gap = vv ? Math.max(0, Math.round(window.innerHeight - (vv.height + vv.offsetTop))) : 0;
-    document.documentElement.style.setProperty("--vvb", gap + "px");
+    const d = $("dock"); if (d && !d.hidden) document.documentElement.style.setProperty("--dockH", Math.round(d.getBoundingClientRect().height) + "px");
   };
   fitVisible();
   let rz = null; const later = () => { clearTimeout(rz); rz = setTimeout(() => { fitVisible(); resize(); window.scrollTo(0, 0); }, 120); };

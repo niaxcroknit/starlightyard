@@ -313,8 +313,8 @@ html,body{height:100%;width:100%;overflow:hidden;overscroll-behavior:none;positi
 .backup-confirm{padding:12px;border-radius:14px;background:#fffaf6;border:1.5px solid #ead9e3;display:flex;flex-direction:column;gap:10px}
 .backup-confirm p{margin:0;font-size:13px;line-height:1.6;color:var(--ink);word-break:keep-all}
 
-/* If the browser's own toolbar covers the bottom of the page, lift the whole yard above it. */
-.stage{bottom:var(--vvb,0px)}
+/* the hint pill always sits just above the dock, whatever height the dock has */
+.hint{bottom:calc(var(--dockH,100px) + 8px)}
 
 /* Date picker in the yard's own palette (lavender panel, plum ink, soft pink accent) */
 .dp-veil{background:rgba(70,52,82,.32)}
