@@ -295,3 +295,11 @@ html,body{touch-action:pan-x pan-y}
 @keyframes gFloat{0%,100%{transform:translate(0,0)}50%{transform:translate(8px,-10px)}}
 @media (prefers-reduced-motion:reduce){.g-hand,.g-heart,.g-glow{animation:none}}
 @media (max-height:520px){.g-art{height:84px}.g-page p{font-size:13px;line-height:1.6}.g-list li{padding:6px 10px}}
+
+/* Always fill exactly the visible screen in any orientation:
+ * the stage is pinned to the viewport, so Safari's toolbars, rotation or the keyboard never crop it. */
+html,body{height:100%;width:100%;overflow:hidden;overscroll-behavior:none;position:fixed;inset:0}
+.stage{position:fixed;inset:0;width:auto;height:auto;min-height:0}
+.veil,.dp-veil{max-height:100%}
+.sheet{max-height:calc(100% - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px) - 24px)}
+@supports (height:100dvh){html,body{height:100dvh}}

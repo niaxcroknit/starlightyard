@@ -2094,6 +2094,12 @@ function renderHud(){legacyRenderHud();renderDday();}
 /* ---------- boot ---------- */
 function afterLoad(){ if (G.set && setupOpen && $("setupCancel").hidden) { setupOpen = false; closeVeil("setupVeil"); $("dock").hidden = false; } syncEnts(); recordVisit(); setupEnvelope(); checkSpecial(); renderHud(); }
 window.addEventListener("resize", resize);
+{ // keep the canvas matched to the real visible screen (Safari toolbars, rotation, keyboard)
+  let rz = null; const later = () => { clearTimeout(rz); rz = setTimeout(() => { resize(); window.scrollTo(0, 0); }, 120); };
+  if (window.visualViewport) window.visualViewport.addEventListener("resize", later);
+  window.addEventListener("orientationchange", () => { later(); setTimeout(later, 450); });
+  document.addEventListener("focusout", (ev) => { if (ev.target && /INPUT|TEXTAREA|SELECT/.test(ev.target.tagName)) setTimeout(() => window.scrollTo(0, 0), 60); });
+}
 syncEnts();
 resize();
 ents.forEach((e, i) => { const narrow=W<600&&ents.length>2, slots=[[.28,.22],[.72,.22],[.5,.51],[.25,.82],[.75,.82]]; e.x = narrow?W*slots[i][0]:W*(0.5 + (i - (ents.length-1)/2)*0.17); e.depth = dMin + (dMax-dMin)*(narrow?slots[i][1]:(0.45+(i%2)*0.2)); });
