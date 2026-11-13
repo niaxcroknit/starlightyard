@@ -2185,6 +2185,18 @@ function afterLoad(){ if (G.set && setupOpen && $("setupCancel").hidden) { setup
 window.addEventListener("resize", resize);
 { // keep the canvas matched to the real visible screen (Safari toolbars, rotation, keyboard)
   const fitVisible = () => {
+    // iPhone home-screen app (status bar drawn over the page): the browser reports a screen
+    // that is short by the status-bar height and leaves an empty strip at the bottom.
+    // Measure the real screen and stretch the yard to it.
+    const standalone = window.navigator.standalone === true || (window.matchMedia && matchMedia("(display-mode: standalone), (display-mode: fullscreen)").matches);
+    const root = document.documentElement, stg = document.querySelector(".stage");
+    let full = 0;
+    if (standalone && window.screen) {
+      const portrait = window.innerHeight >= window.innerWidth;
+      full = portrait ? Math.max(screen.width, screen.height) : Math.min(screen.width, screen.height);
+      if (full <= window.innerHeight + 1 || full - window.innerHeight > 140) full = 0;
+    }
+    [root, document.body, stg].forEach(el => { if (!el) return; el.style.height = full ? full + "px" : ""; if (el === stg) el.style.bottom = full ? "auto" : ""; });
     const d = $("dock"); if (d && !d.hidden) document.documentElement.style.setProperty("--dockH", Math.round(d.getBoundingClientRect().height) + "px");
   };
   fitVisible();
