@@ -2190,19 +2190,22 @@ window.addEventListener("resize", resize);
     // Measure the real screen and stretch the yard to it.
     const standalone = window.navigator.standalone === true || (window.matchMedia && matchMedia("(display-mode: standalone), (display-mode: fullscreen)").matches);
     const root = document.documentElement, stg = document.querySelector(".stage");
-    let full = 0;
+    [root, document.body, stg].forEach(el => { if (el) { el.style.height = ""; if (el === stg) el.style.bottom = ""; } });
+    const laidOut = stg ? stg.getBoundingClientRect().height : window.innerHeight;
+    let full = Math.max(window.innerHeight, root.clientHeight);
     if (standalone && window.screen) {
-      const portrait = window.innerHeight >= window.innerWidth;
-      full = portrait ? Math.max(screen.width, screen.height) : Math.min(screen.width, screen.height);
-      if (full <= window.innerHeight + 1 || full - window.innerHeight > 140) full = 0;
+      // home-screen app covers the whole phone screen: use the real screen size
+      const portrait = window.innerWidth <= window.innerHeight || (screen.orientation && /portrait/.test(screen.orientation.type));
+      full = Math.max(full, portrait ? Math.max(screen.width, screen.height) : Math.min(screen.width, screen.height));
     }
-    [root, document.body, stg].forEach(el => { if (!el) return; el.style.height = full ? full + "px" : ""; if (el === stg) el.style.bottom = full ? "auto" : ""; });
+    if (full > laidOut + 1) [root, document.body, stg].forEach(el => { if (!el) return; el.style.height = full + "px"; if (el === stg) el.style.bottom = "auto"; });
     const d = $("dock"); if (d && !d.hidden) document.documentElement.style.setProperty("--dockH", Math.round(d.getBoundingClientRect().height) + "px");
   };
   fitVisible();
   let rz = null; const later = () => { clearTimeout(rz); rz = setTimeout(() => { fitVisible(); resize(); window.scrollTo(0, 0); }, 120); };
   if (window.visualViewport) window.visualViewport.addEventListener("scroll", later);
   if (window.visualViewport) window.visualViewport.addEventListener("resize", later);
+  window.addEventListener("resize", later); window.addEventListener("pageshow", later); document.addEventListener("visibilitychange", () => { if (!document.hidden) later(); });
   window.addEventListener("orientationchange", () => { later(); setTimeout(later, 450); });
   document.addEventListener("focusout", (ev) => { if (ev.target && /INPUT|TEXTAREA|SELECT/.test(ev.target.tagName)) setTimeout(() => window.scrollTo(0, 0), 60); });
 }
