@@ -196,3 +196,15 @@ body{-webkit-font-smoothing:antialiased}.px{border:1px solid rgba(255,255,255,.8
   .right{gap:4px}.iconbtn{width:30px;height:34px}
   .dock{padding-left:8px;padding-right:8px}.act{font-size:10px;padding:9px 1px;gap:4px}.act svg{width:20px;height:20px}
 }
+
+/* Full-bleed on phones: the scene runs under the status bar and home indicator,
+ * while the top bar, sheets and breathing overlay keep clear of them. */
+html,body{background:#efe7ef}
+.stage{min-height:100%}
+.top{padding-top:calc(12px + env(safe-area-inset-top,0px))}
+.veil{padding-top:calc(16px + env(safe-area-inset-top,0px))}
+.breathe{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (max-height:520px){
+  .top{padding-top:calc(8px + env(safe-area-inset-top,0px))}
+  .veil{padding-top:calc(8px + env(safe-area-inset-top,0px))}
+}
