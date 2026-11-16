@@ -14,7 +14,7 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="icon" type="image/png" href="assets/asset-01.png?v=rainbow">
 <link rel="apple-touch-icon" href="assets/asset-02.png?v=rainbow">
-<link rel="stylesheet" href="./app.css?v=20261116-9">
+<link rel="stylesheet" href="./app.css?v=20261116-10">
 </head>
 <body>
 
@@ -301,6 +301,8 @@
   <button type="button" class="btn" id="decoReset">처음 자리로</button>
   <button type="button" class="btn primary" id="decoDone">완료</button>
 </div>
-<script src="./app.js?v=20261116-9"></script>
+<script>/* safety net: if starting up ever fails, never leave the new-yard sheet covering a saved yard */
+(function(){var t0=Date.now();window.addEventListener("error",function(){if(Date.now()-t0>8000)return;try{var g=JSON.parse(localStorage.getItem("starlight-yard-v1")||"null");if(g&&g.set&&g.family&&g.family.length){var v=document.getElementById("setupVeil");if(v)v.hidden=true;var d=document.getElementById("dock");if(d)d.hidden=false;}}catch(e){}});})();</script>
+<script src="./app.js?v=20261116-10"></script>
 </body>
 </html>

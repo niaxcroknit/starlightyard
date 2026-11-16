@@ -30,6 +30,8 @@ if 'id="decoEditBar"' not in h:
 </div>''' + a, 1)
 h = h.replace('우리 아이들 (최대 5마리)', '우리 아이들 (최대 10마리)')
 h = h.replace('<div class="veil" id="setupVeil">', '<div class="veil" id="setupVeil" hidden>')
+if 'safety net: if starting up' not in h:
+    h = h.replace('<script src="./app.js', '<script>/* safety net: if starting up ever fails, never leave the new-yard sheet covering a saved yard */\n(function(){var t0=Date.now();window.addEventListener("error",function(){if(Date.now()-t0>8000)return;try{var g=JSON.parse(localStorage.getItem("starlight-yard-v1")||"null");if(g&&g.set&&g.family&&g.family.length){var v=document.getElementById("setupVeil");if(v)v.hidden=true;var d=document.getElementById("dock");if(d)d.hidden=false;}}catch(e){}});})();</script>\n' + '<script src="./app.js', 1)
 open(P('index.html'), 'w').write(h)
 
 # ---------- build script: accept ?v= ----------
