@@ -57,30 +57,23 @@ function setDecoEditing(on){
   $("decoReset").addEventListener("click", () => { G.decoPos = {}; save(); toast("처음 자리로 돌려놨어요"); });
 })();
 
-/* ---------- fill any strip below the yard with the yard itself (mirrored grass) ---------- */
+/* ---------- if any page background shows, give it the colour of the yard's bottom edge ---------- */
 (() => {
-  const ext = document.createElement("canvas"); ext.id = "sceneExt"; ext.setAttribute("aria-hidden", "true");
-  document.body.appendChild(ext);
-  const ectx = ext.getContext("2d");
-  let lastCol = "";
-  const draw = () => {
+  let last = "";
+  const paint = () => {
     try {
-      const st = document.querySelector(".stage").getBoundingClientRect();
-      const gap = Math.max(0, Math.ceil((window.screen ? Math.max(screen.height, screen.width) : 0) - st.bottom), 240);
-      ext.style.top = Math.floor(st.bottom - 1) + "px"; ext.style.height = gap + "px";
-      const dpr = cv.width / Math.max(1, cv.offsetWidth), w = cv.width, h = Math.max(1, Math.round(gap*dpr));
-      if (ext.width !== w || ext.height !== h) { ext.width = w; ext.height = h; }
-      const src = Math.min(cv.height, h);
-      ectx.save(); ectx.setTransform(1, 0, 0, -1, 0, src);
-      ectx.drawImage(cv, 0, cv.height - src, w, src, 0, 0, w, src);
-      ectx.restore();
-      if (h > src) { ectx.drawImage(ext, 0, src - 1, w, 1, 0, src, w, h - src); }
-      const d = ectx.getImageData(Math.floor(w/2), Math.max(0, src - 2), 1, 1).data, col = `rgb(${d[0]},${d[1]},${d[2]})`;
-      if (col !== lastCol) { lastCol = col; document.documentElement.style.backgroundColor = col; document.body.style.backgroundColor = col; }
+      if (!cv.width || !cv.height) return;
+      const d = mctx.getImageData(Math.floor(cv.width/2), cv.height - 2, 1, 1).data, col = `rgb(${d[0]},${d[1]},${d[2]})`;
+      if (col !== last && d[3]) { last = col; document.documentElement.style.backgroundColor = col; document.body.style.backgroundColor = col; }
     } catch (e) {}
   };
-  setInterval(draw, 120); setTimeout(draw, 300);
+  setInterval(paint, 1500); setTimeout(paint, 500);
 })();
+function dockTopInStage(){
+  const d = $("dock"), s = document.querySelector(".stage");
+  if (!d || d.hidden || !s) return 0;
+  return d.getBoundingClientRect().top - s.getBoundingClientRect().top;
+}
 
 /* ---------- screen-size check: tap the yard name 5 times (or open with #debug) ---------- */
 function enableScreenCheck(){

@@ -84,6 +84,8 @@ reps = [
   '  if (has("sunflower")) { const _q = decoAt("sunflower", W*0.42, dMin + 1), d = _q.d, x = _q.x; items.push({d, key: "sunflower", fn:'),
  ('  if (has("bench")) { const d = dMin + (dMax - dMin)*0.55, x = W*0.13; items.push({d, fn:',
   '  if (has("bench")) { const _q = decoAt("bench", W*0.13, dMin + (dMax - dMin)*0.55), d = _q.d, x = _q.x; items.push({d, key: "bench", fn:'),
+ ('dMin = 3*P; dMax = Math.max(dMin+10*P, H - dockH - 30 - groundY);',
+  'dMin = 3*P; dMax = Math.max(dMin+10*P, (dockTopInStage() || (H - dockH)) - 30 - groundY);'),
  ('const bowlX = () => W*0.4, bowlD = () => dMin + (dMax - dMin)*0.3;',
   'const bowlX = () => decoAt("bowl", W*0.4, dMin + (dMax - dMin)*0.3).x, bowlD = () => decoAt("bowl", W*0.4, dMin + (dMax - dMin)*0.3).d;'),
  ('bowlHit = {x: x - 10*k, y: groundY + d - 12*k, w: 20*k, h: 16*k}; }}); }',

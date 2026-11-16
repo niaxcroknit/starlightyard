@@ -332,8 +332,16 @@ html,body{height:100%;width:100%;overflow:hidden;overscroll-behavior:none;positi
 .date-btn .dchev{color:#b9a4b8}
 
 /* ===== claude patch css ===== */
-/* yard continues below itself if the phone shows more than the page height */
-#sceneExt{position:fixed;left:0;right:0;width:100%;pointer-events:none;z-index:0;display:block}
+/* The yard is as tall as the phone screen can ever show (100lvh); the menu, sheets and hint sit
+ * at the bottom of what is visible right now (100dvh). Any difference is just more yard. */
+:root{--lift:0px}
+@supports (height:100lvh){
+  .stage{top:0!important;bottom:auto!important;height:100lvh!important;min-height:100%}
+  :root{--lift:max(0px, calc(100lvh - 100dvh))}
+}
+.dock{bottom:var(--lift)}
+.veil,.breathe{bottom:var(--lift)}
+.hint{bottom:calc(var(--dockH,100px) + 8px + var(--lift))}
 
 /* decoration move mode */
 .deco-edit-bar{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(18px + env(safe-area-inset-bottom,0px));z-index:30;display:flex;align-items:center;gap:8px;max-width:calc(100% - 24px);box-sizing:border-box;padding:8px 8px 8px 16px;border-radius:22px;background:rgba(255,251,246,.95);box-shadow:0 10px 30px rgba(86,62,85,.16);border:1px solid rgba(255,255,255,.9);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
