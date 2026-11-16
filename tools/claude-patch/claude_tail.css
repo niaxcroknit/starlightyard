@@ -1,12 +1,13 @@
 /* The yard is as tall as the phone screen can ever show (100lvh); the menu, sheets and hint sit
  * at the bottom of what is visible right now (100dvh). Any difference is just more yard. */
-:root{--lift:0px}
+:root{--lift:0px;--extra:0px}
+.stage{top:0!important;bottom:auto!important;height:calc(100% + var(--extra))!important}
 @supports (height:100lvh){
-  .stage{top:0!important;bottom:auto!important;height:100lvh!important;min-height:100%}
+  .stage{height:calc(100lvh + var(--extra))!important;min-height:100%}
   :root{--lift:max(0px, calc(100lvh - 100dvh))}
 }
-.dock{bottom:var(--lift)}
-.veil,.breathe{bottom:var(--lift)}
+.dock{bottom:calc(var(--lift))}
+.veil,.breathe{bottom:calc(var(--lift))}
 .hint{bottom:calc(var(--dockH,100px) + 8px + var(--lift))}
 
 /* decoration move mode */

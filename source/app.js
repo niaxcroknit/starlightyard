@@ -2707,6 +2707,7 @@ function startMissedJumps(winner,plan){
 for(const p of fam())requestCrouch(p);
 
 
+
 /* ===== Claude patches (re-applied on each Codex drop by merge_patch.py) ===== */
 
 /* ---------- movable decorations ---------- */
@@ -2776,6 +2777,24 @@ function setDecoEditing(on){
     } catch (e) {}
   };
   setInterval(paint, 1500); setTimeout(paint, 500);
+})();
+/* iPhone home-screen apps report a viewport ~59pt shorter than the screen (status bar) yet still paint
+ * that strip. Measure the real screen and stretch the yard into it; controls move down with it. */
+(() => {
+  const fix = () => {
+    const sa = navigator.standalone === true || (window.matchMedia && matchMedia("(display-mode: standalone), (display-mode: fullscreen)").matches);
+    let extra = 0;
+    if (sa && window.screen) {
+      const portrait = window.innerHeight >= window.innerWidth;
+      const sh = portrait ? Math.max(screen.height, screen.width) : Math.min(screen.height, screen.width);
+      const gap = Math.round(sh - window.innerHeight);
+      if (gap > 0 && gap <= 140) extra = gap;
+    }
+    document.documentElement.style.setProperty("--extra", extra + "px");
+  };
+  fix();
+  ["resize", "orientationchange", "pageshow"].forEach(e => window.addEventListener(e, () => { fix(); setTimeout(fix, 300); setTimeout(() => { fix(); resize(); }, 700); }));
+  setTimeout(() => { fix(); resize(); }, 400);
 })();
 function dockTopInStage(){
   const d = $("dock"), s = document.querySelector(".stage");
