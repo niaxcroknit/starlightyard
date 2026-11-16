@@ -2314,7 +2314,7 @@ window.addEventListener("resize", resize);
 }
 syncEnts();
 resize();
-ents.forEach((e, i) => { const narrow=W<600&&ents.length>2, slots=[[.28,.22],[.72,.22],[.5,.51],[.25,.82],[.75,.82]]; e.x = narrow?W*slots[i][0]:W*(0.5 + (i - (ents.length-1)/2)*0.17); e.depth = dMin + (dMax-dMin)*(narrow?slots[i][1]:(0.45+(i%2)*0.2)); });
+ents.forEach((e, i) => { const narrow=W<600&&ents.length>2, slots=[[.28,.22],[.72,.22],[.5,.51],[.25,.82],[.75,.82]]; const sl = slots[i] || [rand(0.15,0.85), rand(0.2,0.85)]; e.x = narrow?W*sl[0]:W*clamp(0.5 + (i - (ents.length-1)/2)*(ents.length > 5 ? 0.085 : 0.17), 0.06, 0.94); e.depth = dMin + (dMax-dMin)*(narrow?sl[1]:(0.45+(i%2)*0.2)); });
 renderHud();
 if (G.set) {
   closeVeil("setupVeil");
