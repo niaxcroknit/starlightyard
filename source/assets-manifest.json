@@ -163,5 +163,65 @@
     "file": "assets/asset-33.webp",
     "mime": "image/webp",
     "bytes": 531594
+  },
+  {
+    "file": "assets/new-pet-poses.webp",
+    "mime": "image/webp",
+    "bytes": 403416
+  },
+  {
+    "file": "assets/new-pet-walk-0.webp",
+    "mime": "image/webp",
+    "bytes": 374436
+  },
+  {
+    "file": "assets/new-pet-walk-1.webp",
+    "mime": "image/webp",
+    "bytes": 386036
+  },
+  {
+    "file": "assets/new-pet-walk-2.webp",
+    "mime": "image/webp",
+    "bytes": 380100
+  },
+  {
+    "file": "assets/species-props.webp",
+    "mime": "image/webp",
+    "bytes": 183956
+  },
+  {
+    "file": "assets/bend-0.webp",
+    "mime": "image/webp",
+    "bytes": 475676
+  },
+  {
+    "file": "assets/bend-1.webp",
+    "mime": "image/webp",
+    "bytes": 538832
+  },
+  {
+    "file": "assets/bend-2.webp",
+    "mime": "image/webp",
+    "bytes": 466144
+  },
+  {
+    "file": "assets/bend-3.webp",
+    "mime": "image/webp",
+    "bytes": 488912
+  },
+  {
+    "file": "assets/bend-4.webp",
+    "mime": "image/webp",
+    "bytes": 404314
+  },
+  {
+    "file": "assets/bend-5.webp",
+    "mime": "image/webp",
+    "bytes": 389872
+  },
+  {
+    "file": "assets/bend-6.webp",
+    "mime": "image/webp",
+    "bytes": 440670
   }
 ]
