@@ -1,0 +1,122 @@
+"""Re-apply Claude's patches on top of a Codex source drop.
+usage: python3 merge_patch.py <source_dir> <version_tag>
+Idempotent where possible; asserts when an anchor is missing so drift is noticed.
+"""
+import sys, re, os
+src, ver = sys.argv[1], sys.argv[2]
+P = lambda f: os.path.join(src, f)
+
+def must(s, a, n=1):
+    c = s.count(a)
+    assert c == n, f"anchor count {c} != {n}: {a[:80]!r}"
+
+# ---------- index.html: cache-busting + title ----------
+h = open(P('index.html')).read()
+h = re.sub(r'<title>[^<]*</title>', '<title>별빛 마당 · 우리의 시간</title>', h, count=1)
+h = re.sub(r'href="\./app\.css(\?[^"]*)?"', f'href="./app.css?v={ver}"', h)
+h = re.sub(r'src="\./app\.js(\?[^"]*)?"', f'src="./app.js?v={ver}"', h)
+if 'id="decoMoveBtn"' not in h:
+    a = '      <div class="decos" id="decoList"></div>'
+    must(h, a)
+    h = h.replace(a, '      <div class="btns"><button type="button" class="btn" id="decoMoveBtn">장식 위치 옮기기</button></div>\n' + a)
+if 'id="decoEditBar"' not in h:
+    a = '\n<script src="./app.js'
+    must(h, a)
+    h = h.replace(a, '''
+<div class="deco-edit-bar" id="decoEditBar" hidden>
+  <span>끌어서 옮겨요</span>
+  <button type="button" class="btn" id="decoReset">처음 자리로</button>
+  <button type="button" class="btn primary" id="decoDone">완료</button>
+</div>''' + a, 1)
+open(P('index.html'), 'w').write(h)
+
+# ---------- build script: accept ?v= ----------
+b = open(P('tools/build-standalone.cjs')).read()
+old = "html=html.replace('<link rel=\"stylesheet\" href=\"./app.css\">',()=>'<style>'+css+'</style>').replace('<script src=\"./app.js\"></script>',()=>'<script>'+js+'</script>');"
+if old in b:
+    b = b.replace(old, "html=html.replace(/<link rel=\"stylesheet\" href=\"\\.\\/app\\.css(\\?[^\"]*)?\">/,()=>'<style>'+css+'</style>').replace(/<script src=\"\\.\\/app\\.js(\\?[^\"]*)?\"><\\/script>/,()=>'<script>'+js+'</script>');")
+    open(P('tools/build-standalone.cjs'), 'w').write(b)
+
+# ---------- app.js ----------
+s = open(P('app.js')).read()
+
+# fitVisible: only stretch to what is really visible
+i0 = s.index('  const fitVisible = () => {'); i1 = s.index('  fitVisible();', i0)
+s = s[:i0] + '''  const fitVisible = () => {
+    // Fill what the browser says is visible; never stretch past it (that would hide the menu).
+    const standalone = window.navigator.standalone === true || (window.matchMedia && matchMedia("(display-mode: standalone), (display-mode: fullscreen)").matches);
+    const root = document.documentElement, stg = document.querySelector(".stage");
+    [root, document.body, stg].forEach(el => { if (el) { el.style.height = ""; if (el === stg) el.style.bottom = ""; } });
+    const laidOut = stg ? stg.getBoundingClientRect().height : window.innerHeight;
+    const vv = window.visualViewport;
+    let full = Math.max(window.innerHeight, root.clientHeight, vv ? Math.round(vv.height + vv.offsetTop) : 0);
+    if (full > laidOut + 1) [root, document.body, stg].forEach(el => { if (!el) return; el.style.height = full + "px"; if (el === stg) el.style.bottom = "auto"; });
+    const d = $("dock"); if (d && !d.hidden) document.documentElement.style.setProperty("--dockH", Math.round(d.getBoundingClientRect().height) + "px");
+    if (window.__syDebug) window.__syDebug({standalone, laidOut, full});
+  };
+''' + s[i1:]
+a = '  if (window.visualViewport) window.visualViewport.addEventListener("resize", later);'
+must(s, a)
+if 'addEventListener("pageshow", later)' not in s:
+    s = s.replace(a, a + '\n  window.addEventListener("resize", later); window.addEventListener("pageshow", later); document.addEventListener("visibilitychange", () => { if (!document.hidden) later(); });', 1)
+
+# decor positions: helpers used by drawScene
+reps = [
+ ('function cushionDepth(){ return dMin + (dMax-dMin)*0.22; }',
+  'function cushionDepth(){ return decoAt("cushion", W*0.24, dMin + (dMax-dMin)*0.22).d; }\nfunction cushionX(){ return decoAt("cushion", W*0.24, dMin + (dMax-dMin)*0.22).x; }'),
+ ('function cushionSlot(e){ const i = ents.indexOf(e), n = ents.length; return W*0.24 +',
+  'function cushionSlot(e){ const i = ents.indexOf(e), n = ents.length; return cushionX() +'),
+ ('    const d = cushionDepth() - 10 - i*3, x = W*0.07 + i*Math.min(W*0.075, 22*P);\n    items.push({d, fn:',
+  '    const _q = decoAt("frame-" + p.id, W*0.07 + i*Math.min(W*0.075, 22*P), cushionDepth() - 10 - i*3), d = _q.d, x = _q.x;\n    items.push({d, key: "frame-" + p.id, fn:'),
+ ('  if (has("cushion")) items.push({d: cushionDepth()-0.1, fn: () => { const k = decK(cushionDepth()); softShadow(W*0.24 + 3*k, groundY + cushionDepth() + k, 19*k, 3.5*k, 0.28); place(cushionDec(), W*0.24, groundY + cushionDepth(), k); }});',
+  '  if (has("cushion")) items.push({d: cushionDepth()-0.1, key: "cushion", fn: () => { const k = decK(cushionDepth()); softShadow(cushionX() + 3*k, groundY + cushionDepth() + k, 19*k, 3.5*k, 0.28); place(cushionDec(), cushionX(), groundY + cushionDepth(), k); }});'),
+ ('  if (has("lantern")) { const d = dMin + 6*S; items.push({d, fn: () => { const k = decK(d), x = W*0.78;',
+  '  if (has("lantern")) { const _q = decoAt("lantern", W*0.78, dMin + 6*S), d = _q.d; items.push({d, key: "lantern", fn: () => { const k = decK(d), x = _q.x;'),
+ ('  if (has("tree")) { const d = dMin; items.push({d: d-1, fn: () => { const k = decK(d), x = W*0.9;',
+  '  if (has("tree")) { const _q = decoAt("tree", W*0.9, dMin), d = _q.d; items.push({d: d-1, key: "tree", fn: () => { const k = decK(d), x = _q.x;'),
+ ('  if (has("mailbox")) { const d = dMin + 4, x = W*0.66; items.push({d, fn:',
+  '  if (has("mailbox")) { const _q = decoAt("mailbox", W*0.66, dMin + 4), d = _q.d, x = _q.x; items.push({d, key: "mailbox", fn:'),
+ ('  if (has("pond")) { const d = dMin + (dMax - dMin)*0.62, x = W*0.82; items.push({d: d - 8, fn:',
+  '  if (has("pond")) { const _q = decoAt("pond", W*0.82, dMin + (dMax - dMin)*0.62), d = _q.d, x = _q.x; items.push({d: d - 8, key: "pond", fn:'),
+ ('  if (has("house")) { const d = dMin + 2, x = W*0.56; items.push({d, fn:',
+  '  if (has("house")) { const _q = decoAt("house", W*0.56, dMin + 2), d = _q.d, x = _q.x; items.push({d, key: "house", fn:'),
+ ('  if (has("sunflower")) { const d = dMin + 1, x = W*0.42; items.push({d, fn:',
+  '  if (has("sunflower")) { const _q = decoAt("sunflower", W*0.42, dMin + 1), d = _q.d, x = _q.x; items.push({d, key: "sunflower", fn:'),
+ ('  if (has("bench")) { const d = dMin + (dMax - dMin)*0.55, x = W*0.13; items.push({d, fn:',
+  '  if (has("bench")) { const _q = decoAt("bench", W*0.13, dMin + (dMax - dMin)*0.55), d = _q.d, x = _q.x; items.push({d, key: "bench", fn:'),
+ ('const bowlX = () => W*0.4, bowlD = () => dMin + (dMax - dMin)*0.3;',
+  'const bowlX = () => decoAt("bowl", W*0.4, dMin + (dMax - dMin)*0.3).x, bowlD = () => decoAt("bowl", W*0.4, dMin + (dMax - dMin)*0.3).d;'),
+ ('bowlHit = {x: x - 10*k, y: groundY + d - 12*k, w: 20*k, h: 16*k}; }}); }',
+  'bowlHit = {x: x - 10*k, y: groundY + d - 12*k, w: 20*k, h: 16*k}; decoHits.push({key: "bowl", x: x - 11*k, y: groundY + d - 13*k, w: 22*k, h: 15*k, fx: x, fd: d}); }}); }'),
+ ('  items.sort((a,b) => a.d - b.d).forEach(i => i.fn());',
+  '  decoHits.length = 0; items.sort((a,b) => a.d - b.d).forEach(i => { placingKey = i.key || null; i.fn(); placingKey = null; });\n  drawDecoEditMarks();'),
+ ('function place(d,sx,sy,k){\n',
+  'function place(d,sx,sy,k){\n if(placingKey)decoHits.push({key:placingKey,x:sx-d.ax*k,y:sy-d.ay*k,w:(d.w||d.cv.width)*k,h:(d.h||d.cv.height)*k,fx:sx,fd:sy-groundY});\n'),
+ (''' for(const {sp,x,d}of speciesPropLayout())items.push({d:d-.1,fn:()=>{
+  const image=speciesPropArt.get(sp),k=P*ds(d),height=({dog:8,cat:27,hamster:24,hedgehog:20,parrot:28,rabbit:18})[sp]*k*(W<500?.84:1),width=height*image.width/image.height;
+  mctx.save();mctx.imageSmoothingEnabled=true;softShadow(x,groundY+d,width*.4,2*k,.18);mctx.drawImage(image,x-width/2,groundY+d-height,width,height);mctx.restore();
+ }});''',
+  ''' for(const o of speciesPropLayout()){const q=decoAt('auto-'+o.sp,o.x,o.d),sp=o.sp,x=q.x,d=q.d;items.push({d:d-.1,fn:()=>{
+  const image=speciesPropArt.get(sp),k=P*ds(d),height=({dog:8,cat:27,hamster:24,hedgehog:20,parrot:28,rabbit:18})[sp]*k*(W<500?.84:1),width=height*image.width/image.height;
+  mctx.save();mctx.imageSmoothingEnabled=true;softShadow(x,groundY+d,width*.4,2*k,.18);mctx.drawImage(image,x-width/2,groundY+d-height,width,height);mctx.restore();
+  decoHits.push({key:'auto-'+sp,x:x-width/2,y:groundY+d-height,w:width,h:height,fx:x,fd:d});
+ }});}'''),
+]
+for a, b2 in reps:
+    if b2.split('\n')[0] in s and a not in s:
+        continue
+    must(s, a)
+    s = s.replace(a, b2, 1)
+
+s = s.rstrip(); assert s.endswith('})();')
+s = s[:-5] + open(os.path.join(os.path.dirname(__file__), 'claude_tail.js')).read() + '\n})();\n'
+open(P('app.js'), 'w').write(s)
+
+# ---------- app.css ----------
+c = open(P('app.css')).read()
+marker = '/* ===== claude patch css ===== */'
+if marker in c:
+    c = c[:c.index(marker)]
+c = c.rstrip() + '\n\n' + marker + '\n' + open(os.path.join(os.path.dirname(__file__), 'claude_tail.css')).read()
+open(P('app.css'), 'w').write(c)
+print("patched", src, ver)

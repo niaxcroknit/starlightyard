@@ -330,3 +330,14 @@ html,body{height:100%;width:100%;overflow:hidden;overscroll-behavior:none;positi
 .dp-ok{background:#ead8e9;color:#624c68;box-shadow:0 6px 18px rgba(150,110,150,.16)}
 .date-btn{border-color:#e9dfe9;color:#645163}
 .date-btn .dchev{color:#b9a4b8}
+
+/* ===== claude patch css ===== */
+/* yard continues below itself if the phone shows more than the page height */
+#sceneExt{position:fixed;left:0;right:0;width:100%;pointer-events:none;z-index:0;display:block}
+
+/* decoration move mode */
+.deco-edit-bar{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(18px + env(safe-area-inset-bottom,0px));z-index:30;display:flex;align-items:center;gap:8px;max-width:calc(100% - 24px);box-sizing:border-box;padding:8px 8px 8px 16px;border-radius:22px;background:rgba(255,251,246,.95);box-shadow:0 10px 30px rgba(86,62,85,.16);border:1px solid rgba(255,255,255,.9);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+.deco-edit-bar span{font-size:13px;color:#645163;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:1 1 auto}
+.deco-edit-bar .btn{flex:none;padding:9px 12px;font-size:13px;min-width:0}
+#decoMoveBtn{flex:1 1 auto}
+@media (max-width:360px){.deco-edit-bar span{display:none}}

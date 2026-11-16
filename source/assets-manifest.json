@@ -223,5 +223,75 @@
     "file": "assets/bend-6.webp",
     "mime": "image/webp",
     "bytes": 440670
+  },
+  {
+    "file": "assets/reach-0.webp",
+    "mime": "image/webp",
+    "bytes": 248974
+  },
+  {
+    "file": "assets/reach-1.webp",
+    "mime": "image/webp",
+    "bytes": 269220
+  },
+  {
+    "file": "assets/reach-2.webp",
+    "mime": "image/webp",
+    "bytes": 258890
+  },
+  {
+    "file": "assets/reach-3.webp",
+    "mime": "image/webp",
+    "bytes": 254654
+  },
+  {
+    "file": "assets/reach-4.webp",
+    "mime": "image/webp",
+    "bytes": 238960
+  },
+  {
+    "file": "assets/reach-5.webp",
+    "mime": "image/webp",
+    "bytes": 229012
+  },
+  {
+    "file": "assets/reach-6.webp",
+    "mime": "image/webp",
+    "bytes": 274672
+  },
+  {
+    "file": "assets/crouch-0.webp",
+    "mime": "image/webp",
+    "bytes": 289510
+  },
+  {
+    "file": "assets/crouch-1.webp",
+    "mime": "image/webp",
+    "bytes": 316604
+  },
+  {
+    "file": "assets/crouch-2.webp",
+    "mime": "image/webp",
+    "bytes": 300072
+  },
+  {
+    "file": "assets/crouch-3.webp",
+    "mime": "image/webp",
+    "bytes": 292398
+  },
+  {
+    "file": "assets/crouch-4.webp",
+    "mime": "image/webp",
+    "bytes": 302702
+  },
+  {
+    "file": "assets/crouch-5.webp",
+    "mime": "image/webp",
+    "bytes": 256276
+  },
+  {
+    "file": "assets/crouch-6.webp",
+    "mime": "image/webp",
+    "bytes": 252004
   }
 ]

@@ -760,7 +760,7 @@ const awake = () => ents.filter(e => e.state !== "sleep");
 const ey = (e) => groundY + e.depth;
 function setState(e, s, think){ e.state = s; e.stateT = 0; e.front = false; if (think != null) e.think = think; }
 function sitFront(e, t){ if (e.target) return; setState(e, "sit", t || rand(3,6)); e.front = true; }
-function goTo(e, x, depth, fast, cb){ e.bow=null; if(ball&&ball.by===e&&ball.state==='grabbing')ballFade(e); e.target = {x:clamp(x,16*P,W-16*P), depth:clamp(depth,dMin,dMax), fast:!!fast}; e.onArrive = cb||null; }
+function goTo(e, x, depth, fast, cb){ e.catchJump=null; e.bow=null; if(ball&&ball.by===e&&ball.state==='grabbing')ballFade(e); e.target = {x:clamp(x,16*P,W-16*P), depth:clamp(depth,dMin,dMax), fast:!!fast}; e.onArrive = cb||null; }
 
 let ball = null, treats = [], glows = [], hearts = [], sparks = [], rising = null, bubble = null, bubbleCooldown = 6;
 let ballMode = false, glowTimer = 0, lastPatWarm = 0, chimeT = 0, lastStar = null;
@@ -814,8 +814,9 @@ function idleLine(){
 }
 function unlocked(key){ const u = UNLOCKS.find(u=>u.key===key); return !!u && G.warmth >= u.at; }
 function has(key){ return unlocked(key) && !(G.hidden || []).includes(key); }
-function cushionDepth(){ return dMin + (dMax-dMin)*0.22; }
-function cushionSlot(e){ const i = ents.indexOf(e), n = ents.length; return W*0.24 + (i - (n-1)/2)*Math.min(9*P, 60); }
+function cushionDepth(){ return decoAt("cushion", W*0.24, dMin + (dMax-dMin)*0.22).d; }
+function cushionX(){ return decoAt("cushion", W*0.24, dMin + (dMax-dMin)*0.22).x; }
+function cushionSlot(e){ const i = ents.indexOf(e), n = ents.length; return cushionX() + (i - (n-1)/2)*Math.min(9*P, 60); }
 function decide(e){
   const r = Math.random(), sleepy = NIGHT*0.3 + 0.07;
   const others = ents.filter(o => o !== e && o.state !== "sleep");
@@ -838,6 +839,7 @@ function updatePet(e, dt){
   if ((rub && rub.e === e) || breathing) e.think = Math.max(e.think, 2);
   e.blink -= dt; if (e.blink < -0.14) e.blink = rand(2.5, 5);
   if (e.jumpY > 0 || e.vy > 0) { e.vy -= 1500*S*dt; e.jumpY = Math.max(0, e.jumpY + e.vy*dt); if (e.jumpY===0) e.vy = 0; }
+  if(updateCatchJump(e,dt))return;
   if(e.bow){e.bow.t+=dt;if(e.bow.t>=1.02){e.bow=null;setState(e,'idle',2);}else return;}
   if(ball&&ball.state==='grabbing'&&ball.by===e)return;
   if (e.target) {
@@ -873,14 +875,15 @@ function throwBall(tx, ty){
   if (ball) return;
   bowl.full=false;bowl.left=0;bowl.round=null;for(const e of ents)e.atBowl=false;
   const td = clamp(ty - groundY, dMin, dMax);
-  ball = {round:uid(),sx:W*0.5, sy:H+10, tx:clamp(tx,16*P,W-16*P), td, p:0, dur:0.95, peak:Math.min(H*0.42, 300*S), state:"fly", x:W*0.5, y:H+10, alt:0, fade:1, bounce:0, by:null};
+  ball = {round:uid(),sx:W*0.5, sy:H+10, tx:clamp(tx,16*P,W-16*P), td, p:0, dur:1.55, peak:Math.min(H*0.42, 300*S), state:"fly", x:W*0.5, y:H+10, alt:0, fade:1, bounce:0, by:null};
   const order = [...ents].sort((a,b) => ((a.wins||0) - (b.wins||0)) || (Math.random() - 0.5));
   order.forEach((e, i) => { e.boost = i === 0 ? 1.22 : rand(0.8, 1.0); });
-  ents.forEach(e => { e.chaseRound=ball.round;requestBend(petOf(e));if (e.state === "sleep") setState(e, "idle"); goTo(e, ball.tx + rand(-6,6)*P, td + rand(-6,6), true, () => pickBall(e)); });
+  ents.forEach(e => { e.chaseRound=ball.round;requestBend(petOf(e));requestReach(petOf(e));requestCrouch(petOf(e));if (e.state === "sleep") setState(e, "idle"); goTo(e, ball.tx + rand(-6,6)*P, td + rand(-6,6), true, () => pickBall(e)); });
+  planJumpCatch();
   sfx("throw");
 }
 function ballMouth(e){
- const p=petOf(e),k=P*ds(e.depth)*1.4*petSizeFactor(p),amount=bendAmount(e),spr=(amount!==null?getBendSprite(p,amount):null)||getBendSprite(p,0)||getSprite(p.species,p.breed,'stand',0,'n',e.dir),b=BM.ball(),bk=P*ds(e.depth);
+ const p=petOf(e),k=P*ds(e.depth)*1.4*petSizeFactor(p),amount=bendAmount(e),spr=(jumpCrouchAmount(e)!==null?getCrouchSprite(p,jumpCrouchAmount(e)):null)||(e.catchJump?.phase==='air'?getReachSprite(p,reachFrame(e)):null)||(amount!==null?getBendSprite(p,amount):null)||getBendSprite(p,0)||getSprite(p.species,p.breed,'stand',0,'n',e.dir),b=BM.ball(),bk=P*ds(e.depth);
  return {x:e.x+e.dir*(spr.m.mx-AX)*k,y:ey(e)-e.jumpY+(spr.m.my-GROUND)*k-b.height*bk*.1};
 }
 function approachBall(e){
@@ -905,13 +908,13 @@ function pickBall(e){
  beginBallGrab(e,false);
 }
 function othersStop(winner){
- for(const o of ents)if(o!==winner&&((ball&&o.chaseRound===ball.round)||(o.target&&o.target.fast))){startMissedBow(o,ball?.round||'pickup',ball?.x??winner.x);o.happy=.8;}
+ for(const o of ents)if(o!==winner&&((ball&&o.chaseRound===ball.round)||(o.target&&o.target.fast))){if(o.catchJump)o.catchJump.missed=true;else startMissedBow(o,ball?.round||'pickup',ball?.x??winner.x);o.happy=.8;}
 }
 function bringBack(e, caught){
   goTo(e, W*0.5 + rand(-0.12, 0.12)*W, dMin + (dMax-dMin)*rand(0.5, 0.75), false, () => {
     e.carry = false; if (!ball) return;
     ball.state = "drop"; ball.x = e.x + e.dir*14*P*ds(e.depth); ball.y = ey(e); ball.td = e.depth; ball.alt = 0; ball.fade = 1; ball.by = null;
-    e.happy = 1.6; e.vy = 340*S;
+    e.happy = 1.6;
     addWarmth(caught ? 2 : 1);
     say(e, caught ? pick(["봤어? 잡았어!","한 번 더!","나 잘했지?"]) : pick(["가져왔어!","또 던져 줘","헥헥, 재밌다"]));
     save();
@@ -920,16 +923,23 @@ function bringBack(e, caught){
 function updateBall(dt){
   if (!ball) return;
   if (ball.state === "fly") {
+    if(!ball.jumpPlan&&ball.p<.4)planJumpCatch();
     ball.p += dt/ball.dur; const p = Math.min(1, ball.p);
     ball.x = lerp(ball.sx, ball.tx, p); ball.y = lerp(ball.sy, groundY + ball.td, p); ball.alt = 4*ball.peak*p*(1-p);
     const pd = lerp(dMax+60*S, ball.td, p);
+    const plan=ball.jumpPlan;
+    if(plan&&!plan.started&&ball.p*ball.dur>=plan.at){
+      plan.started=true;const e=plan.e;
+      if(ents.includes(e)&&Math.hypot(e.x-plan.x,e.depth-plan.d)<7*P){e.target=null;e.onArrive=null;e.moveSpeed=0;e.dir=plan.dir;setState(e,'stand');e.catchJump={phase:'prep',t:0,v:plan.v,vx:clamp((plan.x-e.x)/plan.air,-90*S,90*S)};startMissedJumps(e,plan);}
+    }
     const can = ents.filter(e => { const k=P*ds(e.depth),mouth=ballMouth(e),bb=BM.ball();
       const cy=ball.y-ball.alt-bb.height*k*(1+(1-p)*.9)*.5;
-      return p>.65&&Math.abs(e.depth-Math.min(pd,dMax))<28*S&&Math.hypot(mouth.x-ball.x,mouth.y-cy)<9*k;
+      return !!e.catchJump&&!e.catchJump.missed&&e.catchJump.phase==='air'&&e.jumpY>2*S&&p>.65&&Math.hypot(mouth.x-ball.x,mouth.y-cy)<4*k;
     });
     if(can.length){
       const e=can.sort((a,b)=>Math.hypot(ballMouth(a).x-ball.x,ballMouth(a).y-(ball.y-ball.alt))-Math.hypot(ballMouth(b).x-ball.x,ballMouth(b).y-(ball.y-ball.alt)))[0];
-      beginBallGrab(e,true);G.catches++;e.happy=1.2;
+      ball.state='carried';ball.by=e;ball.carryT=0;e.carry=true;e.wins=(e.wins||0)+1;G.catches++;e.happy=1.2;
+      ball.grabY=ball.y-ball.alt;ents.forEach(o=>o.boost=1);othersStop(e);
       sparkBurst(ball.x,ball.grabY,'#ffe08a',8);toast(petOf(e).name+' 멋진 캐치!');sfx('catch');return;
     }
 
@@ -958,7 +968,7 @@ function updateBall(dt){
     ball.carryT = (ball.carryT || 0) + dt;
     const c = ball.by;
     // the carrier lost its way back (petted, fed, removed...): let the ball go where it is
-    if (!c || !ents.includes(c) || (ball.carryT > 1 && !(c.target && c.onArrive))) { if (c) c.carry = false; ballFade(c); }
+    if (!c || !ents.includes(c) || (ball.carryT > 1 && !c.catchJump && !(c.target && c.onArrive))) { if (c) c.carry = false; ballFade(c); }
   } else if (ball.state === "drop") { ball.fade -= dt*0.8; if (ball.fade <= 0) { ents.forEach(e => e.carry = false); ball = null; } }
   if (ball) { ball.age = (ball.age || 0) + dt; if (ball.age > 40) ballFade(); }
 }
@@ -1186,14 +1196,16 @@ function drawPetEnt(e){
   if (e.jumpY > 0) pose = "run";
   const grabbing=ball&&ball.state==='grabbing'&&ball.by===e;
   if(grabbing)pose="stand";
-  const f = moving ? (e.walkPhase||0) : Math.floor(e.anim * 1.6) % 4;
+  const f = e.catchJump?.phase==='air' ? 0 : moving ? (e.walkPhase||0) : Math.floor(e.anim * 1.6) % 4;
   if (pose === "sit" && e.front) pose = "front";
   if ((pose === "walk" || pose === "run") && e.jumpY === 0 && Math.abs(e.mdd || 0) > (e.motionFront ? .48 : .72)) pose = e.mdd > 0 ? "fwalk" : "bwalk";
   const front = bendAmount(e)===null&&(pose === "front" || pose === "fwalk" || pose === "bwalk");
   e.motionFront=moving&&front;
   let expr = "n"; if (e.bliss > 0 || (breathing && breathVal > 0.8)) expr = "s"; else if (e.happy > 0 || e.jumpY > 0) expr = "h"; else if (e.blink < 0) expr = "b";
   const amount=bendAmount(e),bend=amount!==null?getBendSprite(p,amount):null;
-  const spr = bend||getSprite(p.species, p.breed, pose, f, expr, front ? 1 : e.dir);
+  const crouchAmount=jumpCrouchAmount(e),crouch=crouchAmount!==null?getCrouchSprite(p,crouchAmount):null;
+  const reaching=e.catchJump?.phase==='air'?getReachSprite(p,reachFrame(e)):null;
+  const spr = crouch||reaching||bend||getSprite(p.species, p.breed, pose, f, expr, front ? 1 : e.dir);
   const dip=0;
   const x = e.x, y = ey(e) - e.jumpY+dip+(bend&&e.state==='eat'&&e.stateT>.4&&e.stateT<1.65&&!RM?Math.sin(e.anim*15)*.13*k:0);
   softShadow(x + (front ? 0 : e.dir*2*k), ey(e) + k*0.5, Math.max(6, 15 - e.jumpY/(3*k))*k, 3.2*k, 0.32*(1 - Math.min(0.6, e.jumpY/(120*S))));
@@ -1232,16 +1244,16 @@ function drawScene(t){
   frameHits = [];
   const withPhoto = fam().filter(p => p.photo);
   withPhoto.forEach((p, i) => {
-    const d = cushionDepth() - 10 - i*3, x = W*0.07 + i*Math.min(W*0.075, 22*P);
-    items.push({d, fn: () => { const dec = frameDec(p); if (!dec) return; const k = decK(d)*(withPhoto.length > 2 ? 0.8 : 1); softShadow(x, groundY+d, 6*k, 1.5*k, 0.25); place(dec, x, groundY + d, k); frameHits.push({p, x: x - 10*k, y: groundY + d - 35*k, w: 20*k, h: 35*k}); }});
+    const _q = decoAt("frame-" + p.id, W*0.07 + i*Math.min(W*0.075, 22*P), cushionDepth() - 10 - i*3), d = _q.d, x = _q.x;
+    items.push({d, key: "frame-" + p.id, fn: () => { const dec = frameDec(p); if (!dec) return; const k = decK(d)*(withPhoto.length > 2 ? 0.8 : 1); softShadow(x, groundY+d, 6*k, 1.5*k, 0.25); place(dec, x, groundY + d, k); frameHits.push({p, x: x - 10*k, y: groundY + d - 35*k, w: 20*k, h: 35*k}); }});
   });
-  if (has("cushion")) items.push({d: cushionDepth()-0.1, fn: () => { const k = decK(cushionDepth()); softShadow(W*0.24 + 3*k, groundY + cushionDepth() + k, 19*k, 3.5*k, 0.28); place(cushionDec(), W*0.24, groundY + cushionDepth(), k); }});
+  if (has("cushion")) items.push({d: cushionDepth()-0.1, key: "cushion", fn: () => { const k = decK(cushionDepth()); softShadow(cushionX() + 3*k, groundY + cushionDepth() + k, 19*k, 3.5*k, 0.28); place(cushionDec(), cushionX(), groundY + cushionDepth(), k); }});
   let lamp = null;
-  if (has("lantern")) { const d = dMin + 6*S; items.push({d, fn: () => { const k = decK(d), x = W*0.78; softShadow(x + 2*k, groundY + d, 6*k, 1.6*k, 0.28); place(lanternDec(NIGHT > 0.3 ? 1 : 0), x, groundY + d, k); lamp = {x: x + 6*k, y: groundY + d - 18*k, k}; }}); }
-  if (has("tree")) { const d = dMin; items.push({d: d-1, fn: () => { const k = decK(d), x = W*0.9; softShadow(x + 3*k, groundY + d, 14*k, 2.5*k, 0.25); place(treeDec(RM ? 0 : (Math.sin(t*2.1) > 0 ? 1 : 0)), x, groundY + d, k); }}); }
+  if (has("lantern")) { const _q = decoAt("lantern", W*0.78, dMin + 6*S), d = _q.d; items.push({d, key: "lantern", fn: () => { const k = decK(d), x = _q.x; softShadow(x + 2*k, groundY + d, 6*k, 1.6*k, 0.28); place(lanternDec(NIGHT > 0.3 ? 1 : 0), x, groundY + d, k); lamp = {x: x + 6*k, y: groundY + d - 18*k, k}; }}); }
+  if (has("tree")) { const _q = decoAt("tree", W*0.9, dMin), d = _q.d; items.push({d: d-1, key: "tree", fn: () => { const k = decK(d), x = _q.x; softShadow(x + 3*k, groundY + d, 14*k, 2.5*k, 0.25); place(treeDec(RM ? 0 : (Math.sin(t*2.1) > 0 ? 1 : 0)), x, groundY + d, k); }}); }
   for (const tr of treats) if (tr.landed) items.push({d: tr.d, fn: () => drawTreatM(tr)});
   bowlHit = null; poopHits = [];
-  { const d = bowlD(), x = bowlX(); items.push({d, fn: () => { const k = decK(d), img = BM.bowl(bowl.full ? 1 : 0); softShadow(x, groundY + d, 7*k, 1.6*k, 0.28); drawArtImage(mctx,img, Math.round(x - img.width*k/2), Math.round(groundY + d - img.height*k), Math.round(img.width*k), Math.round(img.height*k)); bowlHit = {x: x - 10*k, y: groundY + d - 12*k, w: 20*k, h: 16*k}; }}); }
+  { const d = bowlD(), x = bowlX(); items.push({d, fn: () => { const k = decK(d), img = BM.bowl(bowl.full ? 1 : 0); softShadow(x, groundY + d, 7*k, 1.6*k, 0.28); drawArtImage(mctx,img, Math.round(x - img.width*k/2), Math.round(groundY + d - img.height*k), Math.round(img.width*k), Math.round(img.height*k)); bowlHit = {x: x - 10*k, y: groundY + d - 12*k, w: 20*k, h: 16*k}; decoHits.push({key: "bowl", x: x - 11*k, y: groundY + d - 13*k, w: 22*k, h: 15*k, fx: x, fd: d}); }}); }
   for (const pp of poops) items.push({d: pp.d, fn: () => {
     const k = decK(pp.d)*(pp.pop < 1 ? 0.4 + pp.pop*0.6 : 1), img = BM.poop(), foot = groundY + pp.d, pw = img.width*k, ph = img.height*k;
     if (pp.cl == null) {
@@ -1251,11 +1263,11 @@ function drawScene(t){
     drawScoopClean(pp, img, k, foot, pw, ph);
   }});
   if (has("fence")) items.push({d: dMin - 3, fn: () => drawFence() });
-  if (has("mailbox")) { const d = dMin + 4, x = W*0.66; items.push({d, fn: () => { const k = decK(d); softShadow(x, groundY + d, 5*k, 1.3*k, 0.26); place(mailboxDec(), x, groundY + d, k); }}); }
-  if (has("pond")) { const d = dMin + (dMax - dMin)*0.62, x = W*0.82; items.push({d: d - 8, fn: () => { const k = decK(d); place(pondDec(Math.floor(t*1.5) % 2), x, groundY + d, k); }}); }
-  if (has("house")) { const d = dMin + 2, x = W*0.56; items.push({d, fn: () => { const k = decK(d); softShadow(x + 2*k, groundY + d, 16*k, 2.6*k, 0.26); place(houseDec(), x, groundY + d, k); }}); }
-  if (has("sunflower")) { const d = dMin + 1, x = W*0.42; items.push({d, fn: () => { const k = decK(d); place(sunflowerDec(RM ? 0 : (Math.sin(t*1.2) > 0 ? 1 : 0)), x, groundY + d, k); }}); }
-  if (has("bench")) { const d = dMin + (dMax - dMin)*0.55, x = W*0.13; items.push({d, fn: () => { const k = decK(d); softShadow(x, groundY + d, 15*k, 2.2*k, 0.26); place(benchDec(), x, groundY + d, k); }}); }
+  if (has("mailbox")) { const _q = decoAt("mailbox", W*0.66, dMin + 4), d = _q.d, x = _q.x; items.push({d, key: "mailbox", fn: () => { const k = decK(d); softShadow(x, groundY + d, 5*k, 1.3*k, 0.26); place(mailboxDec(), x, groundY + d, k); }}); }
+  if (has("pond")) { const _q = decoAt("pond", W*0.82, dMin + (dMax - dMin)*0.62), d = _q.d, x = _q.x; items.push({d: d - 8, key: "pond", fn: () => { const k = decK(d); place(pondDec(Math.floor(t*1.5) % 2), x, groundY + d, k); }}); }
+  if (has("house")) { const _q = decoAt("house", W*0.56, dMin + 2), d = _q.d, x = _q.x; items.push({d, key: "house", fn: () => { const k = decK(d); softShadow(x + 2*k, groundY + d, 16*k, 2.6*k, 0.26); place(houseDec(), x, groundY + d, k); }}); }
+  if (has("sunflower")) { const _q = decoAt("sunflower", W*0.42, dMin + 1), d = _q.d, x = _q.x; items.push({d, key: "sunflower", fn: () => { const k = decK(d); place(sunflowerDec(RM ? 0 : (Math.sin(t*1.2) > 0 ? 1 : 0)), x, groundY + d, k); }}); }
+  if (has("bench")) { const _q = decoAt("bench", W*0.13, dMin + (dMax - dMin)*0.55), d = _q.d, x = _q.x; items.push({d, key: "bench", fn: () => { const k = decK(d); softShadow(x, groundY + d, 15*k, 2.2*k, 0.26); place(benchDec(), x, groundY + d, k); }}); }
   envHit = null;
   if (envelope) items.push({d: envelope.d, fn: () => {
     const k = P*ds(envelope.d), b = BM.env(), bob = Math.round(Math.sin(t*2.4)*1.5)*k, x = envelope.x, y = groundY + envelope.d;
@@ -1279,7 +1291,8 @@ function drawScene(t){
   appendSpeciesDecor(items);
   for (const e of ents) items.push({d: e.depth + 0.5, fn: () => drawPetEnt(e)});
   if (ball && ball.state !== "fly") items.push({d: ball.td + 0.2, fn: drawBallM});
-  items.sort((a,b) => a.d - b.d).forEach(i => i.fn());
+  decoHits.length = 0; items.sort((a,b) => a.d - b.d).forEach(i => { placingKey = i.key || null; i.fn(); placingKey = null; });
+  drawDecoEditMarks();
   for (const tr of treats) if (!tr.landed) drawTreatM(tr);
   if (ball && ball.state === "fly") drawBallM();
   return lamp;
@@ -1649,7 +1662,7 @@ $("editPet").addEventListener("click", () => { closeVeil("settingsVeil"); openSe
 /* ---------- meals & tidying ---------- */
 const bowl = {full: false, left: 0};
 let bowlHit = null, poops = [], poopHits = [];
-const bowlX = () => W*0.4, bowlD = () => dMin + (dMax - dMin)*0.3;
+const bowlX = () => decoAt("bowl", W*0.4, dMin + (dMax - dMin)*0.3).x, bowlD = () => decoAt("bowl", W*0.4, dMin + (dMax - dMin)*0.3).d;
 function feed(){
   for(const p of fam())requestBend(p);
   if(ball)ballFade(ball.by);
@@ -2070,6 +2083,7 @@ function decor(key,w,h,ax,ay,fn){
  d={cv:c,w,h,ax,ay};decCache.set(key,d);return d;
 }
 function place(d,sx,sy,k){
+ if(placingKey)decoHits.push({key:placingKey,x:sx-d.ax*k,y:sy-d.ay*k,w:(d.w||d.cv.width)*k,h:(d.h||d.cv.height)*k,fx:sx,fd:sy-groundY});
  mctx.save();mctx.imageSmoothingEnabled=true;mctx.imageSmoothingQuality='high';
  mctx.drawImage(d.cv,sx-d.ax*k,sy-d.ay*k,(d.w||d.cv.width)*k,(d.h||d.cv.height)*k);mctx.restore();
 }
@@ -2268,13 +2282,11 @@ function afterLoad(){ if (G.set && setupOpen && $("setupCancel").hidden) { setup
 window.addEventListener("resize", resize);
 { // keep the canvas matched to the real visible screen (Safari toolbars, rotation, keyboard)
   const fitVisible = () => {
-    // Fill the real screen. iPhone home-screen apps can lay the page out shorter than the screen
-    // (by the status-bar height) and leave an empty strip at the bottom: stretch to the screen then.
+    // Fill what the browser says is visible; never stretch past it (that would hide the menu).
     const standalone = window.navigator.standalone === true || (window.matchMedia && matchMedia("(display-mode: standalone), (display-mode: fullscreen)").matches);
     const root = document.documentElement, stg = document.querySelector(".stage");
     [root, document.body, stg].forEach(el => { if (el) { el.style.height = ""; if (el === stg) el.style.bottom = ""; } });
     const laidOut = stg ? stg.getBoundingClientRect().height : window.innerHeight;
-    // stretch only to what the browser says is really visible; never past it (that would hide the menu)
     const vv = window.visualViewport;
     let full = Math.max(window.innerHeight, root.clientHeight, vv ? Math.round(vv.height + vv.offsetTop) : 0);
     if (full > laidOut + 1) [root, document.body, stg].forEach(el => { if (!el) return; el.style.height = full + "px"; if (el === stg) el.style.bottom = "auto"; });
@@ -2563,10 +2575,11 @@ function speciesPropLayout(){
  return present.map(sp=>{let chosen=candidates[0],best=-1;for(const spot of candidates){const score=occupied.length?Math.min(...occupied.map(p=>Math.hypot((spot[0]-p[0])*1.4,spot[1]-p[1]))):1;if(score>best){best=score;chosen=spot;}}occupied.push(chosen);return {sp,x:chosen[0]*W,d:dMin+chosen[1]*(dMax-dMin)};});
 }
 function appendSpeciesDecor(items){
- for(const {sp,x,d}of speciesPropLayout())items.push({d:d-.1,fn:()=>{
+ for(const o of speciesPropLayout()){const q=decoAt('auto-'+o.sp,o.x,o.d),sp=o.sp,x=q.x,d=q.d;items.push({d:d-.1,fn:()=>{
   const image=speciesPropArt.get(sp),k=P*ds(d),height=({dog:8,cat:27,hamster:24,hedgehog:20,parrot:28,rabbit:18})[sp]*k*(W<500?.84:1),width=height*image.width/image.height;
   mctx.save();mctx.imageSmoothingEnabled=true;softShadow(x,groundY+d,width*.4,2*k,.18);mctx.drawImage(image,x-width/2,groundY+d-height,width,height);mctx.restore();
- }});
+  decoHits.push({key:'auto-'+sp,x:x-width/2,y:groundY+d-height,w:width,h:height,fx:x,fd:d});
+ }});}
 }
 function appendSpeciesDecoControls(){
  const present=[...new Set(fam().map(p=>p.species))];if(!present.length)return;
@@ -2595,6 +2608,7 @@ function requestBend(p){
 }
 function bendCurve(t){if(t<.40)return 2*(1-Math.cos(Math.PI*clamp(t/.40,0,1)))/2;if(t<.56)return 2;return 2*(1-(1-Math.cos(Math.PI*clamp((t-.56)/.46,0,1)))/2);}
 function bendAmount(e){
+ const jump=jumpBend(e);if(jump!==null)return jump;
  if(e.bow)return bendCurve(e.bow.t);
  if(ball&&ball.by===e&&ball.state==='grabbing'&&!ball.caught)return bendCurve(ball.grabT);
  if(e.state==='eat'){const t=e.stateT;if(t<.4)return bendCurve(t);if(t<1.65)return 1.92+.08*Math.sin(t*15);return 2*(1-clamp((t-1.65)/.45,0,1));}
@@ -2619,33 +2633,176 @@ function startMissedBow(e,round,x){
 
 for(const p of fam())requestBend(p);
 
-/* ---------- if any strip of the page shows around the yard, paint it the colour of the yard's edge ---------- */
+function planJumpCatch(){
+ if(!ball||ball.state!=='fly'||!ents.length)return;
+ const sorted=[...ents].sort((a,b)=>Math.hypot(a.x-ball.tx,a.depth-ball.td)-Math.hypot(b.x-ball.tx,b.depth-ball.td)+(a.wins||0)*8-(b.wins||0)*8);
+ for(const e of sorted){const pet=petOf(e),k=P*ds(ball.td)*1.4*petSizeFactor(pet),spr=getReachSprite(pet,1),bb=BM.ball(),bk=P*ds(ball.td),g=1500*S;
+  if(!spr||!getCrouchSprite(pet,2))continue;
+  for(let p=.72;p<=.94;p+=.02){const bx=lerp(ball.sx,ball.tx,p),by=lerp(ball.sy,groundY+ball.td,p)-4*ball.peak*p*(1-p)-bb.height*bk*(1+(1-p)*.9)*.5;
+   const mouthY=groundY+ball.td+(spr.m.my-GROUND)*k-bb.height*bk*.1,h=mouthY-by;
+   if(h<12*S||h>90*S*Math.sqrt(petSizeFactor(pet)))continue;
+   const dir=bx>=e.x?1:-1,x=clamp(bx-dir*(spr.m.mx-AX)*k,16*P,W-16*P),v=Math.sqrt(2*g*h),air=v/g,prep=.32,at=p*ball.dur-air-prep;
+   if(at<Math.max(.06,ball.p*ball.dur+.04)||Math.hypot(x-e.x,ball.td-e.depth)>Math.max(30,at*190*S))continue;
+   ball.jumpPlan={e,p,x,d:ball.td,dir,v,air,at};goTo(e,x,ball.td,true);return;
+  }
+ }
+}
+function updateCatchJump(e,dt){
+ const j=e.catchJump;if(!j)return false;j.t+=dt;
+ if(j.phase==='prep'){
+  if(j.t>=.32){j.phase='air';j.t=0;e.vy=j.v;e.jumpY=.01;}
+ }else if(j.phase==='air'){
+  e.x=clamp(e.x+(j.vx||0)*dt,16*P,W-16*P);
+  if(e.jumpY<=0&&e.vy<=0){j.phase='land';j.t=0;}
+ }else if(j.phase==='land'&&j.t>=.30){
+  e.catchJump=null;setState(e,'idle',2);if(ball&&ball.state==='carried'&&ball.by===e)bringBack(e,true);else if(ball&&ball.state==='ground')approachBall(e);return true;
+ }
+ return true;
+}
+function jumpBend(e){const j=e.catchJump;if(!j)return null;if(j.phase==='prep')return Math.sin(Math.PI*.5*clamp(j.t/.14,0,1));if(j.phase==='land')return 1.5*Math.sin(Math.PI*clamp(j.t/.22,0,1));return null;}
+
+const REACH_DATA=[{"url":"assets/reach-0.webp","entries":{"cat/cheese|0":[6,9,244,237],"cat/cheese|1":[262,9,244,237],"cat/cheese|2":[518,9,244,237],"cat/tuxedo|0":[6,262,244,243],"cat/tuxedo|1":[262,262,244,243],"cat/tuxedo|2":[518,262,244,243],"cat/mackerel|0":[6,518,244,244],"cat/mackerel|1":[262,518,244,244],"cat/mackerel|2":[518,518,244,244],"cat/calico|0":[6,774,244,243],"cat/calico|1":[262,774,244,243],"cat/calico|2":[518,774,244,243],"cat/black|0":[6,1030,244,244],"cat/black|1":[262,1030,244,244],"cat/black|2":[518,1030,244,244],"cat/white|0":[6,1286,244,244],"cat/white|1":[262,1286,244,244],"cat/white|2":[518,1286,244,244]}},{"url":"assets/reach-1.webp","entries":{"cat/russian|0":[10,6,235,244],"cat/russian|1":[266,6,235,244],"cat/russian|2":[522,6,235,244],"cat/siamese|0":[12,262,232,244],"cat/siamese|1":[268,262,232,244],"cat/siamese|2":[524,262,232,244],"cat/persian|0":[6,522,244,236],"cat/persian|1":[262,522,244,236],"cat/persian|2":[518,522,244,236],"cat/fold|0":[6,775,244,242],"cat/fold|1":[262,775,244,242],"cat/fold|2":[518,775,244,242],"cat/munchkin|0":[6,1031,244,241],"cat/munchkin|1":[262,1031,244,241],"cat/munchkin|2":[518,1031,244,241],"cat/norwegian|0":[6,1286,244,243],"cat/norwegian|1":[262,1286,244,243],"cat/norwegian|2":[518,1286,244,243]}},{"url":"assets/reach-2.webp","entries":{"cat/british|0":[6,6,244,243],"cat/british|1":[262,6,244,243],"cat/british|2":[518,6,244,243],"cat/ragdoll|0":[6,262,243,244],"cat/ragdoll|1":[262,262,243,244],"cat/ragdoll|2":[518,262,243,244],"cat/bengal|0":[13,518,229,244],"cat/bengal|1":[269,518,229,244],"cat/bengal|2":[525,518,229,244],"cat/american|0":[17,774,222,244],"cat/american|1":[273,774,222,244],"cat/american|2":[529,774,222,244],"dog/maltese|0":[18,1030,220,244],"dog/maltese|1":[274,1030,220,244],"dog/maltese|2":[530,1030,220,244],"dog/corgi|0":[15,1286,225,244],"dog/corgi|1":[271,1286,225,244],"dog/corgi|2":[527,1286,225,244]}},{"url":"assets/reach-3.webp","entries":{"dog/poodle|0":[13,6,230,244],"dog/poodle|1":[269,6,230,244],"dog/poodle|2":[525,6,230,244],"dog/pom|0":[13,262,230,244],"dog/pom|1":[269,262,230,244],"dog/pom|2":[525,262,230,244],"dog/shiba|0":[17,518,222,244],"dog/shiba|1":[273,518,222,244],"dog/shiba|2":[529,518,222,244],"dog/jindo|0":[18,774,220,244],"dog/jindo|1":[274,774,220,244],"dog/jindo|2":[530,774,220,244],"dog/golden|0":[11,1030,233,244],"dog/golden|1":[267,1030,233,244],"dog/golden|2":[523,1030,233,244],"dog/bichon|0":[19,1286,217,244],"dog/bichon|1":[275,1286,217,244],"dog/bichon|2":[531,1286,217,244]}},{"url":"assets/reach-4.webp","entries":{"dog/dachs|0":[6,9,244,237],"dog/dachs|1":[262,9,244,237],"dog/dachs|2":[518,9,244,237],"dog/mix|0":[13,262,230,244],"dog/mix|1":[269,262,230,244],"dog/mix|2":[525,262,230,244],"rabbit/white|0":[19,518,217,244],"rabbit/white|1":[275,518,217,244],"rabbit/white|2":[531,518,217,244],"rabbit/gray|0":[14,774,227,244],"rabbit/gray|1":[270,774,227,244],"rabbit/gray|2":[526,774,227,244],"rabbit/brown|0":[13,1030,230,244],"rabbit/brown|1":[269,1030,230,244],"rabbit/brown|2":[525,1030,230,244],"rabbit/lop|0":[7,1285,241,245],"rabbit/lop|1":[263,1285,241,245],"rabbit/lop|2":[519,1285,241,245]}},{"url":"assets/reach-5.webp","entries":{"rabbit/dutch|0":[30,6,195,244],"rabbit/dutch|1":[286,6,195,244],"rabbit/dutch|2":[542,6,195,244],"hamster/golden|0":[23,262,210,244],"hamster/golden|1":[279,262,210,244],"hamster/golden|2":[535,262,210,244],"hamster/djungarian|0":[18,518,219,244],"hamster/djungarian|1":[274,518,219,244],"hamster/djungarian|2":[530,518,219,244],"hamster/pearl|0":[21,774,214,244],"hamster/pearl|1":[277,774,214,244],"hamster/pearl|2":[533,774,214,244],"hamster/panda|0":[20,1030,215,244],"hamster/panda|1":[276,1030,215,244],"hamster/panda|2":[532,1030,215,244],"hamster/robo|0":[22,1286,212,244],"hamster/robo|1":[278,1286,212,244],"hamster/robo|2":[534,1286,212,244]}},{"url":"assets/reach-6.webp","entries":{"parrot/conure|0":[9,6,238,244],"parrot/conure|1":[265,6,238,244],"parrot/conure|2":[521,6,238,244],"parrot/cockatiel|0":[11,262,233,244],"parrot/cockatiel|1":[267,262,233,244],"parrot/cockatiel|2":[523,262,233,244],"parrot/budgie|0":[14,518,228,244],"parrot/budgie|1":[270,518,228,244],"parrot/budgie|2":[526,518,228,244],"hedgehog/salt|0":[9,773,237,245],"hedgehog/salt|1":[265,773,237,245],"hedgehog/salt|2":[521,773,237,245],"hedgehog/cinnamon|0":[10,1030,236,244],"hedgehog/cinnamon|1":[266,1030,236,244],"hedgehog/cinnamon|2":[522,1030,236,244],"hedgehog/white|0":[10,1286,235,244],"hedgehog/white|1":[266,1286,235,244],"hedgehog/white|2":[522,1286,235,244]}}];
+const reachViews=new Map(),reachPending=new Set(),reachLoaded=new Set(),reachCache=new Map();
+function requestReach(p){
+ const id=p.species+'/'+p.breed,index=REACH_DATA.findIndex(a=>a.entries[id+'|0']);if(index<0||reachPending.has(index)||reachLoaded.has(index))return;
+ reachPending.add(index);const im=new Image();im.onload=()=>{for(const [key,[sx,sy,w,h]]of Object.entries(REACH_DATA[index].entries)){const c=clayCanvas(w,h);c.getContext('2d').drawImage(im,sx,sy,w,h,0,0,w,h);reachViews.set(key,c);}reachPending.delete(index);reachLoaded.add(index);};im.onerror=()=>reachPending.delete(index);im.src=REACH_DATA[index].url;
+}
+function reachFrame(e){const j=e.catchJump;if(!j||j.phase!=='air')return 1;const ratio=e.vy/j.v;return ratio>.32?0:ratio<-.32?2:1;}
+function getReachSprite(p,frame=1){
+ requestReach(p);const id=p.species+'/'+p.breed,key=id+'|'+frame;let out=reachCache.get(key);if(out)return out;const image=reachViews.get(key);if(!image)return null;
+ const B=breedOf(p.species,p.breed),c=clayCanvas(SW*CLAY_SCALE,SH*CLAY_SCALE),x=c.getContext('2d');x.scale(CLAY_SCALE,CLAY_SCALE);x.imageSmoothingEnabled=true;
+ let h=Math.min(34,clayHeight(p.species,B,1)*1.35),w=h*image.width/image.height;if(w>40){h*=40/w;w=40;}const left=AX-w/2,top=GROUND-h;x.drawImage(image,left,top,w,h);
+ const anchor=({cat:[[.90,.30],[.86,.26],[.92,.38]],dog:[[.90,.27],[.87,.23],[.90,.29]],rabbit:[[.90,.39],[.86,.34],[.91,.4]],hamster:[[.91,.29],[.88,.24],[.92,.32]],hedgehog:[[.92,.31],[.90,.29],[.93,.34]],parrot:[[.92,.35],[.90,.30],[.93,.38]]})[p.species][frame];
+ out={cv:c,m:{mx:left+w*anchor[0],my:top+h*anchor[1],front:false},clay:true,ready:true,reaching:true};if(reachCache.size>=72)reachCache.delete(reachCache.keys().next().value);reachCache.set(key,out);return out;
+}
+
+for(const p of fam())requestReach(p);
+
+const CROUCH_DATA=[{"url":"assets/crouch-0.webp","entries":{"cat/cheese|0":[6,24,244,208],"cat/cheese|1":[262,24,244,208],"cat/cheese|2":[518,24,244,208],"cat/tuxedo|0":[6,280,244,208],"cat/tuxedo|1":[262,280,244,208],"cat/tuxedo|2":[518,280,244,208],"cat/mackerel|0":[6,536,244,208],"cat/mackerel|1":[262,536,244,208],"cat/mackerel|2":[518,536,244,208],"cat/calico|0":[6,793,244,205],"cat/calico|1":[262,793,244,205],"cat/calico|2":[518,793,244,205],"cat/black|0":[6,1048,244,208],"cat/black|1":[262,1048,244,208],"cat/black|2":[518,1048,244,208],"cat/white|0":[6,1303,244,209],"cat/white|1":[262,1303,244,209],"cat/white|2":[518,1303,244,209]}},{"url":"assets/crouch-1.webp","entries":{"cat/russian|0":[6,17,244,222],"cat/russian|1":[262,17,244,222],"cat/russian|2":[518,17,244,222],"cat/siamese|0":[6,269,244,230],"cat/siamese|1":[262,269,244,230],"cat/siamese|2":[518,269,244,230],"cat/persian|0":[6,530,244,219],"cat/persian|1":[262,530,244,219],"cat/persian|2":[518,530,244,219],"cat/fold|0":[6,791,244,210],"cat/fold|1":[262,791,244,210],"cat/fold|2":[518,791,244,210],"cat/munchkin|0":[6,1049,244,206],"cat/munchkin|1":[262,1049,244,206],"cat/munchkin|2":[518,1049,244,206],"cat/norwegian|0":[6,1296,244,224],"cat/norwegian|1":[262,1296,244,224],"cat/norwegian|2":[518,1296,244,224]}},{"url":"assets/crouch-2.webp","entries":{"cat/british|0":[6,22,244,211],"cat/british|1":[262,22,244,211],"cat/british|2":[518,22,244,211],"cat/ragdoll|0":[6,280,244,207],"cat/ragdoll|1":[262,280,244,207],"cat/ragdoll|2":[518,280,244,207],"cat/bengal|0":[6,530,244,220],"cat/bengal|1":[262,530,244,220],"cat/bengal|2":[518,530,244,220],"cat/american|0":[6,791,244,210],"cat/american|1":[262,791,244,210],"cat/american|2":[518,791,244,210],"dog/maltese|0":[6,1043,244,217],"dog/maltese|1":[262,1043,244,217],"dog/maltese|2":[518,1043,244,217],"dog/corgi|0":[6,1304,244,208],"dog/corgi|1":[262,1304,244,208],"dog/corgi|2":[518,1304,244,208]}},{"url":"assets/crouch-3.webp","entries":{"dog/poodle|0":[6,14,244,227],"dog/poodle|1":[262,14,244,227],"dog/poodle|2":[518,14,244,227],"dog/pom|0":[6,267,244,233],"dog/pom|1":[262,267,244,233],"dog/pom|2":[518,267,244,233],"dog/shiba|0":[5,517,245,245],"dog/shiba|1":[261,517,245,245],"dog/shiba|2":[517,517,245,245],"dog/jindo|0":[6,774,244,244],"dog/jindo|1":[262,774,244,244],"dog/jindo|2":[518,774,244,244],"dog/golden|0":[6,1049,244,206],"dog/golden|1":[262,1049,244,206],"dog/golden|2":[518,1049,244,206],"dog/bichon|0":[6,1295,244,226],"dog/bichon|1":[262,1295,244,226],"dog/bichon|2":[518,1295,244,226]}},{"url":"assets/crouch-4.webp","entries":{"dog/dachs|0":[6,38,244,179],"dog/dachs|1":[262,38,244,179],"dog/dachs|2":[518,38,244,179],"dog/mix|0":[6,263,244,242],"dog/mix|1":[262,263,244,242],"dog/mix|2":[518,263,244,242],"rabbit/white|0":[10,518,236,244],"rabbit/white|1":[266,518,236,244],"rabbit/white|2":[522,518,236,244],"rabbit/gray|0":[6,774,244,243],"rabbit/gray|1":[262,774,244,243],"rabbit/gray|2":[518,774,244,243],"rabbit/brown|0":[7,1030,241,244],"rabbit/brown|1":[263,1030,241,244],"rabbit/brown|2":[519,1030,241,244],"rabbit/lop|0":[6,1304,244,208],"rabbit/lop|1":[262,1304,244,208],"rabbit/lop|2":[518,1304,244,208]}},{"url":"assets/crouch-5.webp","entries":{"rabbit/dutch|0":[6,15,244,225],"rabbit/dutch|1":[262,15,244,225],"rabbit/dutch|2":[518,15,244,225],"hamster/golden|0":[6,286,244,195],"hamster/golden|1":[262,286,244,195],"hamster/golden|2":[518,286,244,195],"hamster/djungarian|0":[6,545,244,190],"hamster/djungarian|1":[262,545,244,190],"hamster/djungarian|2":[518,545,244,190],"hamster/pearl|0":[6,805,244,182],"hamster/pearl|1":[262,805,244,182],"hamster/pearl|2":[518,805,244,182],"hamster/panda|0":[6,1060,244,183],"hamster/panda|1":[262,1060,244,183],"hamster/panda|2":[518,1060,244,183],"hamster/robo|0":[6,1316,244,184],"hamster/robo|1":[262,1316,244,184],"hamster/robo|2":[518,1316,244,184]}},{"url":"assets/crouch-6.webp","entries":{"parrot/conure|0":[6,23,244,210],"parrot/conure|1":[262,23,244,210],"parrot/conure|2":[518,23,244,210],"parrot/cockatiel|0":[6,276,244,215],"parrot/cockatiel|1":[262,276,244,215],"parrot/cockatiel|2":[518,276,244,215],"parrot/budgie|0":[6,530,244,219],"parrot/budgie|1":[262,530,244,219],"parrot/budgie|2":[518,530,244,219],"hedgehog/salt|0":[6,794,244,203],"hedgehog/salt|1":[262,794,244,203],"hedgehog/salt|2":[518,794,244,203],"hedgehog/cinnamon|0":[6,1048,244,208],"hedgehog/cinnamon|1":[262,1048,244,208],"hedgehog/cinnamon|2":[518,1048,244,208],"hedgehog/white|0":[6,1302,244,212],"hedgehog/white|1":[262,1302,244,212],"hedgehog/white|2":[518,1302,244,212]}}];
+const crouchViews=new Map(),crouchPending=new Set(),crouchLoaded=new Set(),crouchCache=new Map();
+function requestCrouch(p){
+ const id=p.species+'/'+p.breed,index=CROUCH_DATA.findIndex(a=>a.entries[id+'|0']);if(index<0||crouchPending.has(index)||crouchLoaded.has(index))return;
+ crouchPending.add(index);const im=new Image();im.onload=()=>{for(const [key,[sx,sy,w,h]]of Object.entries(CROUCH_DATA[index].entries)){const c=clayCanvas(w,h);c.getContext('2d').drawImage(im,sx,sy,w,h,0,0,w,h);crouchViews.set(key,c);}crouchPending.delete(index);crouchLoaded.add(index);};im.onerror=()=>crouchPending.delete(index);im.src=CROUCH_DATA[index].url;
+}
+function jumpCrouchAmount(e){
+ const j=e.catchJump;if(!j)return null;
+ if(j.phase==='prep'){const t=Math.max(0,j.t);return t<.20?2*(1-Math.cos(Math.PI*.5*t/.20)):t<.27?2:2-clamp((t-.27)/.05,0,1);}
+ if(j.phase==='land')return 2*Math.sin(Math.PI*clamp(j.t/.30,0,1));return null;
+}
+function getCrouchSprite(p,amount){
+ requestCrouch(p);const id=p.species+'/'+p.breed,f=Math.round(clamp(amount,0,2)),key=id+'|'+f;let out=crouchCache.get(key);if(out)return out;const image=crouchViews.get(key);if(!image)return null;
+ const B=breedOf(p.species,p.breed),c=clayCanvas(SW*CLAY_SCALE,SH*CLAY_SCALE),x=c.getContext('2d');x.scale(CLAY_SCALE,CLAY_SCALE);x.imageSmoothingEnabled=true;
+ let h=clayHeight(p.species,B,1),w=h*image.width/image.height;if(w>40){h*=40/w;w=40;}const left=AX-w/2,top=GROUND-h;x.drawImage(image,left,top,w,h);
+ const base=({cat:[.36,.49,.66],dog:[.40,.52,.69],rabbit:[.56,.64,.75],hamster:[.43,.55,.68],hedgehog:[.40,.52,.65],parrot:[.40,.48,.58]})[p.species][f];
+ out={cv:c,m:{mx:left+w*.95,my:top+h*base,front:false},clay:true,ready:true,crouching:true};if(crouchCache.size>=72)crouchCache.delete(crouchCache.keys().next().value);crouchCache.set(key,out);return out;
+}
+function startMissedJumps(winner,plan){
+ if(!ball)return;let index=0;for(const o of ents){if(o===winner||o.chaseRound!==ball.round)continue;
+ o.target=null;o.onArrive=null;o.bow=null;o.moveSpeed=0;o.carry=false;o.dir=ball.x>=o.x?1:-1;setState(o,'stand');
+ const factor=petSizeFactor(petOf(o)),v=Math.min(plan.v*.8,Math.sqrt(2*1500*S*48*S*Math.sqrt(factor)));
+ o.catchJump={phase:'prep',t:-index*.035,v,vx:o.dir*12*S,missed:true};requestCrouch(petOf(o));requestReach(petOf(o));index++;
+ }
+}
+
+for(const p of fam())requestCrouch(p);
+
+/* ===== Claude patches (re-applied on each Codex drop by merge_patch.py) ===== */
+
+/* ---------- movable decorations ---------- */
+var placingKey = null, decoHits = [], decoEditing = false, decoDrag = null;
+function decoAt(key, x, d){
+  const s = G.decoPos && G.decoPos[key];
+  if (!s) return {x, d};
+  return {x: clamp(s.fx, 0.03, 0.97)*W, d: dMin + clamp(s.fd, 0, 1)*(dMax - dMin)};
+}
+function drawDecoEditMarks(){
+  if (!decoEditing) return;
+  mctx.save();
+  for (const h of decoHits) {
+    const on = decoDrag && decoDrag.key === h.key;
+    mctx.setLineDash(on ? [] : [5, 5]); mctx.lineWidth = on ? 2.5 : 1.6;
+    mctx.strokeStyle = on ? "rgba(233,167,186,.95)" : "rgba(255,255,255,.9)";
+    mctx.fillStyle = on ? "rgba(255,240,246,.18)" : "rgba(255,255,255,.08)";
+    const p = new Path2D(); p.roundRect(h.x - 4, h.y - 4, h.w + 8, h.h + 8, 12); mctx.fill(p); mctx.stroke(p);
+  }
+  mctx.restore();
+}
+function setDecoEditing(on){
+  decoEditing = on; decoDrag = null;
+  $("decoEditBar").hidden = !on; $("dock").hidden = on;
+  if (on) { closeVeil("decoVeil"); setBallMode(false); setHint(""); }
+  else save();
+}
 (() => {
-  let last = "";
-  const paint = () => {
-    try {
-      if (!cv.width || !cv.height) return;
-      const y = cv.height - 2, xs = [0.2, 0.5, 0.8].map(f => Math.floor(cv.width*f));
-      let r = 0, g = 0, b = 0;
-      for (const x of xs) { const d = mctx.getImageData(x, y, 1, 1).data; r += d[0]; g += d[1]; b += d[2]; }
-      const col = `rgb(${Math.round(r/3)},${Math.round(g/3)},${Math.round(b/3)})`;
-      if (col !== last && (r + g + b) > 0) { last = col; document.documentElement.style.backgroundColor = col; document.body.style.backgroundColor = col; }
-    } catch (e) {}
-  };
-  setInterval(paint, 1500); setTimeout(paint, 600);
+  const stage = document.querySelector(".stage");
+  const toScene = (ev) => { const r = cv.getBoundingClientRect(); return {x: (ev.clientX - r.left)/camZ, y: (ev.clientY - r.top)/camZ}; };
+  stage.addEventListener("pointerdown", (ev) => {
+    if (!decoEditing || ev.target !== cv) return;
+    ev.stopPropagation(); ev.preventDefault();
+    const p = toScene(ev);
+    for (let i = decoHits.length - 1; i >= 0; i--) {
+      const h = decoHits[i];
+      if (p.x >= h.x - 6 && p.x <= h.x + h.w + 6 && p.y >= h.y - 6 && p.y <= h.y + h.h + 6) {
+        decoDrag = {key: h.key, id: ev.pointerId, px: p.x, py: p.y, fx: h.fx, fd: h.fd};
+        try { cv.setPointerCapture(ev.pointerId); } catch (e) {}
+        return;
+      }
+    }
+  }, true);
+  stage.addEventListener("pointermove", (ev) => {
+    if (!decoEditing) return;
+    ev.stopPropagation();
+    if (!decoDrag || ev.pointerId !== decoDrag.id) return;
+    const p = toScene(ev), nx = clamp(decoDrag.fx + (p.x - decoDrag.px), W*0.03, W*0.97), nd = clamp(decoDrag.fd + (p.y - decoDrag.py), dMin, dMax);
+    G.decoPos = G.decoPos || {};
+    G.decoPos[decoDrag.key] = {fx: nx/W, fd: (nd - dMin)/Math.max(1, dMax - dMin)};
+  }, true);
+  const up = (ev) => { if (!decoEditing) return; ev.stopPropagation(); if (decoDrag && ev.pointerId === decoDrag.id) { decoDrag = null; save(); } };
+  stage.addEventListener("pointerup", up, true); stage.addEventListener("pointercancel", up, true);
+  $("decoMoveBtn").addEventListener("click", () => setDecoEditing(true));
+  $("decoDone").addEventListener("click", () => { setDecoEditing(false); toast("장식 위치를 저장했어요"); });
+  $("decoReset").addEventListener("click", () => { G.decoPos = {}; save(); toast("처음 자리로 돌려놨어요"); });
 })();
 
-/* ---------- screen-size check: open the app with #debug and send a screenshot ---------- */
+/* ---------- fill any strip below the yard with the yard itself (mirrored grass) ---------- */
+(() => {
+  const ext = document.createElement("canvas"); ext.id = "sceneExt"; ext.setAttribute("aria-hidden", "true");
+  document.body.appendChild(ext);
+  const ectx = ext.getContext("2d");
+  let lastCol = "";
+  const draw = () => {
+    try {
+      const st = document.querySelector(".stage").getBoundingClientRect();
+      const gap = Math.max(0, Math.ceil((window.screen ? Math.max(screen.height, screen.width) : 0) - st.bottom), 240);
+      ext.style.top = Math.floor(st.bottom - 1) + "px"; ext.style.height = gap + "px";
+      const dpr = cv.width / Math.max(1, cv.offsetWidth), w = cv.width, h = Math.max(1, Math.round(gap*dpr));
+      if (ext.width !== w || ext.height !== h) { ext.width = w; ext.height = h; }
+      const src = Math.min(cv.height, h);
+      ectx.save(); ectx.setTransform(1, 0, 0, -1, 0, src);
+      ectx.drawImage(cv, 0, cv.height - src, w, src, 0, 0, w, src);
+      ectx.restore();
+      if (h > src) { ectx.drawImage(ext, 0, src - 1, w, 1, 0, src, w, h - src); }
+      const d = ectx.getImageData(Math.floor(w/2), Math.max(0, src - 2), 1, 1).data, col = `rgb(${d[0]},${d[1]},${d[2]})`;
+      if (col !== lastCol) { lastCol = col; document.documentElement.style.backgroundColor = col; document.body.style.backgroundColor = col; }
+    } catch (e) {}
+  };
+  setInterval(draw, 120); setTimeout(draw, 300);
+})();
+
+/* ---------- screen-size check: tap the yard name 5 times (or open with #debug) ---------- */
 function enableScreenCheck(){
   if (document.getElementById("syDebugBox")) { document.getElementById("syDebugBox").remove(); return; }
   const box = document.createElement("pre"), probe = document.createElement("div");
   probe.style.cssText = "position:fixed;left:0;top:0;width:0;height:0;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);pointer-events:none";
-  box.style.cssText = "position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:999;margin:0;padding:12px 14px;border-radius:14px;background:rgba(40,30,50,.86);color:#fff;font:12px/1.55 ui-monospace,Menlo,monospace;white-space:pre;pointer-events:none";
+  box.style.cssText = "position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:999;margin:0;padding:12px 14px;border-radius:14px;background:rgba(40,30,50,.86);color:#fff;font:12px/1.55 ui-monospace,Menlo,monospace;white-space:pre";
+  box.id = "syDebugBox"; box.addEventListener("click", () => box.remove());
   document.body.append(probe, box);
   let extra = {};
   window.__syDebug = (o) => { extra = o; };
   const tick = () => {
+    if (!document.body.contains(box)) return;
     const vv = window.visualViewport, st = document.querySelector(".stage").getBoundingClientRect(), ps = getComputedStyle(probe), dk = $("dock").getBoundingClientRect();
+    const sEl = document.querySelector('script[src*="app.js"]');
     box.textContent = [
       `inner ${innerWidth} x ${innerHeight}`,
       `screen ${screen.width} x ${screen.height}`,
@@ -2656,13 +2813,12 @@ function enableScreenCheck(){
       `safe   top ${ps.paddingTop} / bottom ${ps.paddingBottom}`,
       `app    ${navigator.standalone === true ? "home-screen" : (matchMedia("(display-mode: standalone)").matches ? "standalone" : "browser")}`,
       `fit    laid ${Math.round(extra.laidOut || 0)} -> ${Math.round(extra.full || 0)}`,
-      `build  ${(document.querySelector('script[src*="app.js"]') || {}).src ? document.querySelector('script[src*="app.js"]').src.split("?")[1] || "-" : "single file"}`
+      `build  ${sEl ? (sEl.src.split("?")[1] || "-") : "single file"}`
     ].join("\n");
   };
-  box.id = "syDebugBox"; box.style.pointerEvents = "auto"; box.addEventListener("click", () => box.remove());
-  setInterval(() => { if (document.body.contains(box)) tick(); }, 700); tick();
-  if (typeof fitVisible === "function") fitVisible();
+  setInterval(tick, 700); tick();
 }
 if (/debug/.test(location.hash + location.search)) enableScreenCheck();
 { let taps = 0, tt = null; const t = document.querySelector(".title"); if (t) t.addEventListener("click", () => { taps++; clearTimeout(tt); tt = setTimeout(() => taps = 0, 1200); if (taps >= 5) { taps = 0; enableScreenCheck(); } }); }
+
 })();

@@ -14,7 +14,7 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="icon" type="image/png" href="assets/asset-01.png">
 <link rel="apple-touch-icon" href="assets/asset-02.png">
-<link rel="stylesheet" href="./app.css?v=20261116-2">
+<link rel="stylesheet" href="./app.css?v=20261116-3">
 </head>
 <body>
 
@@ -161,6 +161,7 @@
     <div class="sheet px">
       <h2>마당 꾸미기</h2>
       <p class="lead">온기가 모이면 하나씩 열려요. 눌러서 놓거나 치울 수 있어요.</p>
+      <div class="btns"><button type="button" class="btn" id="decoMoveBtn">장식 위치 옮기기</button></div>
       <div class="decos" id="decoList"></div>
       <div class="btns"><button type="button" class="btn primary" data-close>닫기</button></div>
     </div>
@@ -295,6 +296,11 @@
   </div>
 </div>
 
-<script src="./app.js?v=20261116-2"></script>
+<div class="deco-edit-bar" id="decoEditBar" hidden>
+  <span>끌어서 옮겨요</span>
+  <button type="button" class="btn" id="decoReset">처음 자리로</button>
+  <button type="button" class="btn primary" id="decoDone">완료</button>
+</div>
+<script src="./app.js?v=20261116-3"></script>
 </body>
 </html>
