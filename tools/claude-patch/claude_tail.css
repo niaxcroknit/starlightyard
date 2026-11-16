@@ -1,9 +1,10 @@
 /* The yard is as tall as the phone screen can ever show (100lvh); the menu, sheets and hint sit
  * at the bottom of what is visible right now (100dvh). Any difference is just more yard. */
-:root{--lift:0px;--extra:0px}
-.stage{top:0!important;bottom:auto!important;height:calc(100% + var(--extra))!important}
+:root{--lift:0px;--stageH:100%}
+html,body{background-color:#a8b48d}
+.stage{top:0!important;bottom:auto!important;height:max(100%, var(--stageH))!important}
 @supports (height:100lvh){
-  .stage{height:calc(100lvh + var(--extra))!important;min-height:100%}
+  .stage{height:max(100lvh, var(--stageH))!important}
   :root{--lift:max(0px, calc(100lvh - 100dvh))}
 }
 .dock{bottom:calc(var(--lift))}

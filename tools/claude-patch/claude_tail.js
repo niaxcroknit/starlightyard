@@ -57,35 +57,31 @@ function setDecoEditing(on){
   $("decoReset").addEventListener("click", () => { G.decoPos = {}; save(); toast("처음 자리로 돌려놨어요"); });
 })();
 
-/* ---------- if any page background shows, give it the colour of the yard's bottom edge ---------- */
-(() => {
-  let last = "";
-  const paint = () => {
-    try {
-      if (!cv.width || !cv.height) return;
-      const d = mctx.getImageData(Math.floor(cv.width/2), cv.height - 2, 1, 1).data, col = `rgb(${d[0]},${d[1]},${d[2]})`;
-      if (col !== last && d[3]) { last = col; document.documentElement.style.backgroundColor = col; document.body.style.backgroundColor = col; }
-    } catch (e) {}
-  };
-  setInterval(paint, 1500); setTimeout(paint, 500);
-})();
-/* iPhone home-screen apps report a viewport ~59pt shorter than the screen (status bar) yet still paint
- * that strip. Measure the real screen and stretch the yard into it; controls move down with it. */
+/* ---------- the yard is as tall as the real screen ----------
+ * iPhone home-screen apps can report a viewport shorter than the screen (by the status bar) yet still paint
+ * that strip, and 100lvh can be shorter than innerHeight. Take the largest honest number and size the yard to it.
+ * (No canvas read-backs here: reading pixels from the yard canvas makes iOS drop to slow software drawing.) */
+var __fullInfo = {};
 (() => {
   const fix = () => {
     const sa = navigator.standalone === true || (window.matchMedia && matchMedia("(display-mode: standalone), (display-mode: fullscreen)").matches);
-    let extra = 0;
+    const vv = window.visualViewport;
+    let full = Math.max(window.innerHeight || 0, document.documentElement.clientHeight || 0, vv ? Math.round(vv.height + vv.offsetTop) : 0);
+    let scr = 0;
     if (sa && window.screen) {
       const portrait = window.innerHeight >= window.innerWidth;
-      const sh = portrait ? Math.max(screen.height, screen.width) : Math.min(screen.height, screen.width);
-      const gap = Math.round(sh - window.innerHeight);
-      if (gap > 0 && gap <= 140) extra = gap;
+      scr = portrait ? Math.max(screen.height, screen.width) : Math.min(screen.height, screen.width);
+      if (scr - full > 0 && scr - full <= 140) full = scr;
     }
-    document.documentElement.style.setProperty("--extra", extra + "px");
+    __fullInfo = {sa, scr, full};
+    const v = full + "px";
+    if (document.documentElement.style.getPropertyValue("--stageH") !== v) { document.documentElement.style.setProperty("--stageH", v); setTimeout(resize, 30); }
   };
   fix();
-  ["resize", "orientationchange", "pageshow"].forEach(e => window.addEventListener(e, () => { fix(); setTimeout(fix, 300); setTimeout(() => { fix(); resize(); }, 700); }));
-  setTimeout(() => { fix(); resize(); }, 400);
+  ["resize", "orientationchange", "pageshow"].forEach(e => window.addEventListener(e, () => { fix(); setTimeout(fix, 350); setTimeout(fix, 800); }));
+  if (window.visualViewport) visualViewport.addEventListener("resize", () => setTimeout(fix, 100));
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) setTimeout(fix, 200); });
+  setTimeout(fix, 400);
 })();
 function dockTopInStage(){
   const d = $("dock"), s = document.querySelector(".stage");
@@ -117,6 +113,7 @@ function enableScreenCheck(){
       `safe   top ${ps.paddingTop} / bottom ${ps.paddingBottom}`,
       `app    ${navigator.standalone === true ? "home-screen" : (matchMedia("(display-mode: standalone)").matches ? "standalone" : "browser")}`,
       `fit    laid ${Math.round(extra.laidOut || 0)} -> ${Math.round(extra.full || 0)}`,
+      `full   ${__fullInfo.full} (screen ${__fullInfo.scr}, ${__fullInfo.sa ? 'app' : 'web'}) canvas ${cv.width}x${cv.height}`,
       `build  ${sEl ? (sEl.src.split("?")[1] || "-") : "single file"}`
     ].join("\n");
   };
