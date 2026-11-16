@@ -623,7 +623,7 @@ const BM = {
 const treatImg = (sp) => sp === "cat" ? BM.fish() : sp === "dog" ? BM.bone() : BM.carrot();
 
 /* ---------- state ---------- */
-const NAMES = ["나비","치즈","보리","콩이","모모"];
+const NAMES = ["나비","치즈","보리","콩이","모모","두부","율무","호두","별이","달이"];
 const newPet = (i) => ({id: uid(), name: "", species: "cat", breed: "cheese", motto: "", photo: null, _n: i});
 const SAMPLE = {family:[{id:"p1", name:"나비", species:"cat", breed:"cheese", motto:"", photo:null}], warmth:0, pats:0, catches:0, treats:0, stars:[], sky:"auto", lastVisit:0, updatedAt:0, set:false};
 let G = JSON.parse(JSON.stringify(SAMPLE));
@@ -878,7 +878,12 @@ function throwBall(tx, ty){
   ball = {round:uid(),sx:W*0.5, sy:H+10, tx:clamp(tx,16*P,W-16*P), td, p:0, dur:1.55, peak:Math.min(H*0.42, 300*S), state:"fly", x:W*0.5, y:H+10, alt:0, fade:1, bounce:0, by:null};
   const order = [...ents].sort((a,b) => ((a.wins||0) - (b.wins||0)) || (Math.random() - 0.5));
   order.forEach((e, i) => { e.boost = i === 0 ? 1.22 : rand(0.8, 1.0); });
-  ents.forEach(e => { e.chaseRound=ball.round;requestBend(petOf(e));requestReach(petOf(e));requestCrouch(petOf(e));if (e.state === "sleep") setState(e, "idle"); goTo(e, ball.tx + rand(-6,6)*P, td + rand(-6,6), true, () => pickBall(e)); });
+  const _far = (e) => Math.hypot((e.x - ball.tx)/Math.max(1, W), (e.depth - td)/Math.max(1, dMax - dMin)*0.6);
+  let chasers = ents.filter(e => e.state !== "eat" && _far(e) < 0.42);
+  if (!chasers.length) chasers = [...ents].filter(e => e.state !== "eat").sort((a,b) => _far(a) - _far(b)).slice(0, 1);
+  if (!chasers.length) chasers = [...ents].sort((a,b) => _far(a) - _far(b)).slice(0, 1);
+  ents.forEach(e => { if (!chasers.includes(e) && !e.target && e.state !== "eat" && e.state !== "sleep") e.dir = ball.tx >= e.x ? 1 : -1; });
+  chasers.forEach(e => { e.chaseRound=ball.round;requestBend(petOf(e));requestReach(petOf(e));requestCrouch(petOf(e));if (e.state === "sleep") setState(e, "idle"); goTo(e, ball.tx + rand(-6,6)*P, td + rand(-6,6), true, () => pickBall(e)); });
   planJumpCatch();
   sfx("throw");
 }
@@ -1198,7 +1203,7 @@ function drawPetEnt(e){
   if(grabbing)pose="stand";
   const f = e.catchJump?.phase==='air' ? 0 : moving ? (e.walkPhase||0) : Math.floor(e.anim * 1.6) % 4;
   if (pose === "sit" && e.front) pose = "front";
-  if ((pose === "walk" || pose === "run") && e.jumpY === 0 && Math.abs(e.mdd || 0) > (e.motionFront ? .48 : .72)) pose = e.mdd > 0 ? "fwalk" : "bwalk";
+  if ((pose === "walk" || pose === "run") && e.jumpY === 0 && Math.abs(e.mdd || 0) > (e.motionFront ? .4 : .58)) pose = e.mdd > 0 ? "fwalk" : "bwalk";
   const front = bendAmount(e)===null&&(pose === "front" || pose === "fwalk" || pose === "bwalk");
   e.motionFront=moving&&front;
   let expr = "n"; if (e.bliss > 0 || (breathing && breathVal > 0.8)) expr = "s"; else if (e.happy > 0 || e.jumpY > 0) expr = "h"; else if (e.blink < 0) expr = "b";
@@ -1493,7 +1498,7 @@ function renderFamChips(){
     b.addEventListener("click", () => { selIdx = i; renderSetup(); });
     box.appendChild(b);
   });
-  if (draftFam.length < 5) {
+  if (draftFam.length < 10) {
     const a = document.createElement("button"); a.type = "button"; a.className = "chip add"; a.textContent = "+ 아이 추가";
     a.addEventListener("click", () => { draftFam.push(newPet(draftFam.length)); selIdx = draftFam.length - 1; syncEnts(); renderSetup(); $("petName").focus(); });
     box.appendChild(a);
@@ -1667,10 +1672,16 @@ function feed(){
   for(const p of fam())requestBend(p);
   if(ball)ballFade(ball.by);
   if (bowl.full) { const e = pick(ents); if (e) say(e, "아직 밥 남았어!"); return; }
-  bowl.full = true; bowl.left = ents.length; bowl.round=uid(); const mealRound=bowl.round; sfx("treat");
+  const _now = Date.now(), _hungry = ents.filter(e => !e.ateAt || _now - e.ateAt > 90000);
+  if (!_hungry.length) { const e = pick(ents); if (e) say(e, pick(["아까 먹어서 배불러","배 빵빵해!","조금 있다 먹을래"])); toast("다들 아직 배가 불러요"); return; }
+  const _eaters = _hungry.sort(() => Math.random() - 0.5).slice(0, 1 + Math.floor(Math.random()*_hungry.length));
+  bowl.full = true; bowl.left = _eaters.length; bowl.round=uid(); const mealRound=bowl.round; sfx("treat");
+  const _full = ents.filter(e => !_eaters.includes(e));
+  if (_full.length && Math.random() < 0.6) setTimeout(() => { const e = pick(_full); if (e && !bubble) say(e, pick(["난 아직 배불러","먼저 먹어~","난 구경할래"])); }, 1400);
   for (let i=0;i<10;i++) setTimeout(() => sparks.push({x: bowlX() + rand(-6,6)*P, y: groundY + bowlD() - 30*P, vx: rand(-20,20), vy: 120, t: 0.35, c: "#c98b52"}), i*50);
-  const n = ents.length;
-  ents.forEach((e, i) => {
+  const n = _eaters.length;
+  _eaters.forEach((e, i) => {
+    e.ateAt = _now;
     if (e.state === "sleep") setState(e, "idle");
     const side = n === 1 ? -1 : (i % 2 ? 1 : -1), row = Math.floor(i/2);
     const p=petOf(e),spr=getBendSprite(p,2),reach=spr?(spr.m.mx-AX)*P*ds(bowlD())*1.4*petSizeFactor(p):(15*P*ds(bowlD())*petSizeFactor(p));
@@ -2635,7 +2646,7 @@ for(const p of fam())requestBend(p);
 
 function planJumpCatch(){
  if(!ball||ball.state!=='fly'||!ents.length)return;
- const sorted=[...ents].sort((a,b)=>Math.hypot(a.x-ball.tx,a.depth-ball.td)-Math.hypot(b.x-ball.tx,b.depth-ball.td)+(a.wins||0)*8-(b.wins||0)*8);
+ const sorted=ents.filter(e=>e.chaseRound===ball.round).sort((a,b)=>Math.hypot(a.x-ball.tx,a.depth-ball.td)-Math.hypot(b.x-ball.tx,b.depth-ball.td)+(a.wins||0)*8-(b.wins||0)*8);
  for(const e of sorted){const pet=petOf(e),k=P*ds(ball.td)*1.4*petSizeFactor(pet),spr=getReachSprite(pet,1),bb=BM.ball(),bk=P*ds(ball.td),g=1500*S;
   if(!spr||!getCrouchSprite(pet,2))continue;
   for(let p=.72;p<=.94;p+=.02){const bx=lerp(ball.sx,ball.tx,p),by=lerp(ball.sy,groundY+ball.td,p)-4*ball.peak*p*(1-p)-bb.height*bk*(1+(1-p)*.9)*.5;

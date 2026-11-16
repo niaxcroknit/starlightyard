@@ -28,6 +28,7 @@ if 'id="decoEditBar"' not in h:
   <button type="button" class="btn" id="decoReset">처음 자리로</button>
   <button type="button" class="btn primary" id="decoDone">완료</button>
 </div>''' + a, 1)
+h = h.replace('우리 아이들 (최대 5마리)', '우리 아이들 (최대 10마리)')
 open(P('index.html'), 'w').write(h)
 
 # ---------- build script: accept ?v= ----------
@@ -109,6 +110,11 @@ for a, b2 in reps:
         continue
     must(s, a)
     s = s.replace(a, b2, 1)
+
+REPS2 = [('Math.abs(e.mdd || 0) > (e.motionFront ? .48 : .72)) pose = e.mdd > 0 ? "fwalk" : "bwalk";', 'Math.abs(e.mdd || 0) > (e.motionFront ? .4 : .58)) pose = e.mdd > 0 ? "fwalk" : "bwalk";'), ('const NAMES = ["나비","치즈","보리","콩이","모모"];', 'const NAMES = ["나비","치즈","보리","콩이","모모","두부","율무","호두","별이","달이"];'), ('  if (draftFam.length < 5) {', '  if (draftFam.length < 10) {'), ('  ents.forEach(e => { e.chaseRound=ball.round;requestBend(petOf(e));requestReach(petOf(e));requestCrouch(petOf(e));if (e.state === "sleep") setState(e, "idle"); goTo(e, ball.tx + rand(-6,6)*P, td + rand(-6,6), true, () => pickBall(e)); });', '  const _far = (e) => Math.hypot((e.x - ball.tx)/Math.max(1, W), (e.depth - td)/Math.max(1, dMax - dMin)*0.6);\n  let chasers = ents.filter(e => e.state !== "eat" && _far(e) < 0.42);\n  if (!chasers.length) chasers = [...ents].filter(e => e.state !== "eat").sort((a,b) => _far(a) - _far(b)).slice(0, 1);\n  if (!chasers.length) chasers = [...ents].sort((a,b) => _far(a) - _far(b)).slice(0, 1);\n  ents.forEach(e => { if (!chasers.includes(e) && !e.target && e.state !== "eat" && e.state !== "sleep") e.dir = ball.tx >= e.x ? 1 : -1; });\n  chasers.forEach(e => { e.chaseRound=ball.round;requestBend(petOf(e));requestReach(petOf(e));requestCrouch(petOf(e));if (e.state === "sleep") setState(e, "idle"); goTo(e, ball.tx + rand(-6,6)*P, td + rand(-6,6), true, () => pickBall(e)); });'), (' const sorted=[...ents].sort((a,b)=>Math.hypot(a.x-ball.tx,a.depth-ball.td)', ' const sorted=ents.filter(e=>e.chaseRound===ball.round).sort((a,b)=>Math.hypot(a.x-ball.tx,a.depth-ball.td)'), ('  bowl.full = true; bowl.left = ents.length; bowl.round=uid(); const mealRound=bowl.round; sfx("treat");', '  const _now = Date.now(), _hungry = ents.filter(e => !e.ateAt || _now - e.ateAt > 90000);\n  if (!_hungry.length) { const e = pick(ents); if (e) say(e, pick(["아까 먹어서 배불러","배 빵빵해!","조금 있다 먹을래"])); toast("다들 아직 배가 불러요"); return; }\n  const _eaters = _hungry.sort(() => Math.random() - 0.5).slice(0, 1 + Math.floor(Math.random()*_hungry.length));\n  bowl.full = true; bowl.left = _eaters.length; bowl.round=uid(); const mealRound=bowl.round; sfx("treat");\n  const _full = ents.filter(e => !_eaters.includes(e));\n  if (_full.length && Math.random() < 0.6) setTimeout(() => { const e = pick(_full); if (e && !bubble) say(e, pick(["난 아직 배불러","먼저 먹어~","난 구경할래"])); }, 1400);'), ('  const n = ents.length;\n  ents.forEach((e, i) => {\n    if (e.state === "sleep") setState(e, "idle");\n    const side = n === 1', '  const n = _eaters.length;\n  _eaters.forEach((e, i) => {\n    e.ateAt = _now;\n    if (e.state === "sleep") setState(e, "idle");\n    const side = n === 1')]
+for a, b2 in REPS2:
+    if a not in s and b2.split('\n')[0] in s: continue
+    must(s, a); s = s.replace(a, b2, 1)
 
 s = s.rstrip(); assert s.endswith('})();')
 s = s[:-5] + open(os.path.join(os.path.dirname(__file__), 'claude_tail.js')).read() + '\n})();\n'
