@@ -569,7 +569,7 @@ function getSprite(sp,breedId,pose,f,expr,side){
 
 function initClay(){
  CLAY_WALK_DATA.forEach((atlas,index)=>Object.keys(atlas.entries).forEach(key=>clayWalkAtlasFor.set(key.split('|').slice(0,2).join('|'),index)));
- CLAY_ART_DATA.forEach((atlas,index)=>{
+ CLAY_ART_DATA.forEach((atlas,index)=>{ const go=()=>{
   const im=new Image();clayImages.push(im);
   im.onload=()=>{
    try{
@@ -583,7 +583,11 @@ function initClay(){
     document.documentElement.dataset.clayReady=String(clayViews.size);renderDday();
    }catch(e){clayFailed=true;console.error('Clay art could not be prepared',index,e);}
   };
-  im.onerror=()=>{clayFailed=true;console.error('Clay art could not load',index);};im.src=atlas.url;
+  im.onerror=()=>{clayFailed=true;console.error('Clay art could not load',index);};im.src=atlas.url;};
+  // start-up speed: sheets for animals in this yard first, the rest a little later
+  const mine=new Set(fam().map(p=>p.species+'/'+p.breed)),kinds=new Set(fam().map(p=>p.species));
+  const need=setupOpen||!G.set||/[?&]visit=/.test(location.search)||Object.keys(atlas.entries).some(k=>{const id=k.split('|')[0];return mine.has(id)||kinds.has(id.split('/')[0])&&!fam().some(p=>p.breed);});
+  if(need)go();else setTimeout(go,4500+index*600);
  });
  if(G.set)for(const pet of fam())for(let view=0;view<3;view++)requestClayWalk(pet.species,pet.breed,view);
 }
@@ -1386,7 +1390,7 @@ function frame(now){
   if (lamp && NIGHT > 0.05) { mctx.save(); mctx.globalCompositeOperation = "lighter"; glow(mctx, lamp.x, lamp.y, 36*lamp.k, "255,196,120", 0.42*NIGHT); mctx.restore(); }
   drawOverlayFx(); if (has("butterfly")) drawButterflies(t, dt);
   if (!lanternMode) drawBgLine(dt);
-  bctx.imageSmoothingEnabled = true; bctx.clearRect(0,0,bcv.width,bcv.height); drawArtImage(bctx,cv, 0, 0, bcv.width, bcv.height);
+  if (now - (window.__bloomAt || 0) > 200) { window.__bloomAt = now; bctx.imageSmoothingEnabled = true; bctx.clearRect(0,0,bcv.width,bcv.height); drawArtImage(bctx,cv, 0, 0, bcv.width, bcv.height); }   // the soft glow changes slowly: refresh it 5x a second, not every frame
   mctx.save(); mctx.imageSmoothingEnabled = true; mctx.globalCompositeOperation = "screen"; mctx.globalAlpha = 0.2 + 0.14*NIGHT; drawArtImage(mctx,bcv, 0, 0, W, H); mctx.restore();
   if (vignette) { mctx.fillStyle = vignette; mctx.fillRect(0, 0, W, H); }
   drawZ(t); drawBubble();
@@ -2204,8 +2208,10 @@ function drawBubble(){
 }
 function initSceneArt(){
  const old={...BM};for(const name of Object.keys(BM))BM[name]=(...args)=>clayBit(name,args,old[name](...args));
+ const nowSky=sceneTimeLayers(hourNow()).slice(0,2);
  for(const [key,url]of Object.entries(SCENE_ART.backgrounds)){
-  const im=new Image();im.onload=()=>{sceneBackgrounds.set(key,im);};im.src=url;
+  const go=()=>{const im=new Image();im.onload=()=>{sceneBackgrounds.set(key,im);};im.src=url;};
+  if(nowSky.includes(key))go();else setTimeout(go,5000);   // other times of day aren't needed right away
  }
  const im=new Image();im.onload=()=>{
   for(const [key,[sx,sy,w,h]]of Object.entries(SCENE_ART.props.entries)){
@@ -2646,7 +2652,7 @@ function startMissedBow(e,round,x){
  if(e.missedRound===round)return;e.missedRound=round;e.target=null;e.onArrive=null;e.moveSpeed=0;e.carry=false;e.dir=x>=e.x?1:-1;setState(e,'stand',2);e.bow={t:0,kind:'miss'};requestBend(petOf(e));
 }
 
-for(const p of fam())requestBend(p);
+setTimeout(()=>{for(const p of fam())requestBend(p);},6000);   // only needed once they eat or play
 
 function planJumpCatch(){
  if(!ball||ball.state!=='fly'||!ents.length)return;
@@ -2691,7 +2697,7 @@ function getReachSprite(p,frame=1){
  out={cv:c,m:{mx:left+w*anchor[0],my:top+h*anchor[1],front:false},clay:true,ready:true,reaching:true};if(reachCache.size>=72)reachCache.delete(reachCache.keys().next().value);reachCache.set(key,out);return out;
 }
 
-for(const p of fam())requestReach(p);
+setTimeout(()=>{for(const p of fam())requestReach(p);},7000);
 
 const CROUCH_DATA=[{"url":"assets/crouch-0.webp","entries":{"cat/cheese|0":[6,24,244,208],"cat/cheese|1":[262,24,244,208],"cat/cheese|2":[518,24,244,208],"cat/tuxedo|0":[6,280,244,208],"cat/tuxedo|1":[262,280,244,208],"cat/tuxedo|2":[518,280,244,208],"cat/mackerel|0":[6,536,244,208],"cat/mackerel|1":[262,536,244,208],"cat/mackerel|2":[518,536,244,208],"cat/calico|0":[6,793,244,205],"cat/calico|1":[262,793,244,205],"cat/calico|2":[518,793,244,205],"cat/black|0":[6,1048,244,208],"cat/black|1":[262,1048,244,208],"cat/black|2":[518,1048,244,208],"cat/white|0":[6,1303,244,209],"cat/white|1":[262,1303,244,209],"cat/white|2":[518,1303,244,209]}},{"url":"assets/crouch-1.webp","entries":{"cat/russian|0":[6,17,244,222],"cat/russian|1":[262,17,244,222],"cat/russian|2":[518,17,244,222],"cat/siamese|0":[6,269,244,230],"cat/siamese|1":[262,269,244,230],"cat/siamese|2":[518,269,244,230],"cat/persian|0":[6,530,244,219],"cat/persian|1":[262,530,244,219],"cat/persian|2":[518,530,244,219],"cat/fold|0":[6,791,244,210],"cat/fold|1":[262,791,244,210],"cat/fold|2":[518,791,244,210],"cat/munchkin|0":[6,1049,244,206],"cat/munchkin|1":[262,1049,244,206],"cat/munchkin|2":[518,1049,244,206],"cat/norwegian|0":[6,1296,244,224],"cat/norwegian|1":[262,1296,244,224],"cat/norwegian|2":[518,1296,244,224]}},{"url":"assets/crouch-2.webp","entries":{"cat/british|0":[6,22,244,211],"cat/british|1":[262,22,244,211],"cat/british|2":[518,22,244,211],"cat/ragdoll|0":[6,280,244,207],"cat/ragdoll|1":[262,280,244,207],"cat/ragdoll|2":[518,280,244,207],"cat/bengal|0":[6,530,244,220],"cat/bengal|1":[262,530,244,220],"cat/bengal|2":[518,530,244,220],"cat/american|0":[6,791,244,210],"cat/american|1":[262,791,244,210],"cat/american|2":[518,791,244,210],"dog/maltese|0":[6,1043,244,217],"dog/maltese|1":[262,1043,244,217],"dog/maltese|2":[518,1043,244,217],"dog/corgi|0":[6,1304,244,208],"dog/corgi|1":[262,1304,244,208],"dog/corgi|2":[518,1304,244,208]}},{"url":"assets/crouch-3.webp","entries":{"dog/poodle|0":[6,14,244,227],"dog/poodle|1":[262,14,244,227],"dog/poodle|2":[518,14,244,227],"dog/pom|0":[6,267,244,233],"dog/pom|1":[262,267,244,233],"dog/pom|2":[518,267,244,233],"dog/shiba|0":[5,517,245,245],"dog/shiba|1":[261,517,245,245],"dog/shiba|2":[517,517,245,245],"dog/jindo|0":[6,774,244,244],"dog/jindo|1":[262,774,244,244],"dog/jindo|2":[518,774,244,244],"dog/golden|0":[6,1049,244,206],"dog/golden|1":[262,1049,244,206],"dog/golden|2":[518,1049,244,206],"dog/bichon|0":[6,1295,244,226],"dog/bichon|1":[262,1295,244,226],"dog/bichon|2":[518,1295,244,226]}},{"url":"assets/crouch-4.webp","entries":{"dog/dachs|0":[6,38,244,179],"dog/dachs|1":[262,38,244,179],"dog/dachs|2":[518,38,244,179],"dog/mix|0":[6,263,244,242],"dog/mix|1":[262,263,244,242],"dog/mix|2":[518,263,244,242],"rabbit/white|0":[10,518,236,244],"rabbit/white|1":[266,518,236,244],"rabbit/white|2":[522,518,236,244],"rabbit/gray|0":[6,774,244,243],"rabbit/gray|1":[262,774,244,243],"rabbit/gray|2":[518,774,244,243],"rabbit/brown|0":[7,1030,241,244],"rabbit/brown|1":[263,1030,241,244],"rabbit/brown|2":[519,1030,241,244],"rabbit/lop|0":[6,1304,244,208],"rabbit/lop|1":[262,1304,244,208],"rabbit/lop|2":[518,1304,244,208]}},{"url":"assets/crouch-5.webp","entries":{"rabbit/dutch|0":[6,15,244,225],"rabbit/dutch|1":[262,15,244,225],"rabbit/dutch|2":[518,15,244,225],"hamster/golden|0":[6,286,244,195],"hamster/golden|1":[262,286,244,195],"hamster/golden|2":[518,286,244,195],"hamster/djungarian|0":[6,545,244,190],"hamster/djungarian|1":[262,545,244,190],"hamster/djungarian|2":[518,545,244,190],"hamster/pearl|0":[6,805,244,182],"hamster/pearl|1":[262,805,244,182],"hamster/pearl|2":[518,805,244,182],"hamster/panda|0":[6,1060,244,183],"hamster/panda|1":[262,1060,244,183],"hamster/panda|2":[518,1060,244,183],"hamster/robo|0":[6,1316,244,184],"hamster/robo|1":[262,1316,244,184],"hamster/robo|2":[518,1316,244,184]}},{"url":"assets/crouch-6.webp","entries":{"parrot/conure|0":[6,23,244,210],"parrot/conure|1":[262,23,244,210],"parrot/conure|2":[518,23,244,210],"parrot/cockatiel|0":[6,276,244,215],"parrot/cockatiel|1":[262,276,244,215],"parrot/cockatiel|2":[518,276,244,215],"parrot/budgie|0":[6,530,244,219],"parrot/budgie|1":[262,530,244,219],"parrot/budgie|2":[518,530,244,219],"hedgehog/salt|0":[6,794,244,203],"hedgehog/salt|1":[262,794,244,203],"hedgehog/salt|2":[518,794,244,203],"hedgehog/cinnamon|0":[6,1048,244,208],"hedgehog/cinnamon|1":[262,1048,244,208],"hedgehog/cinnamon|2":[518,1048,244,208],"hedgehog/white|0":[6,1302,244,212],"hedgehog/white|1":[262,1302,244,212],"hedgehog/white|2":[518,1302,244,212]}}];
 const crouchViews=new Map(),crouchPending=new Set(),crouchLoaded=new Set(),crouchCache=new Map();
@@ -2719,7 +2725,7 @@ function startMissedJumps(winner,plan){
  }
 }
 
-for(const p of fam())requestCrouch(p);
+setTimeout(()=>{for(const p of fam())requestCrouch(p);},8000);
 
 
 
@@ -2846,6 +2852,7 @@ function enableScreenCheck(){
 }
 if (/debug/.test(location.hash + location.search)) enableScreenCheck();
 { let taps = 0, tt = null; const t = document.querySelector(".title"); if (t) t.addEventListener("click", () => { taps++; clearTimeout(tt); tt = setTimeout(() => taps = 0, 1200); if (taps >= 5) { taps = 0; enableScreenCheck(); } }); }
+
 
 
 

@@ -6,6 +6,7 @@ def must(s, a):
     assert s.count(a) == 1, f"anchor {s.count(a)}: {a[:70]!r}"
 
 h = open(P('index.html')).read()
+h = h.replace('</button></div>\\n          <p class="small cloud-wait"', '</button></div>\n          <p class="small cloud-wait"')
 h = h.replace('숫자 6개를 아래에', '숫자를 아래에')
 h = h.replace('<input type="text" id="cloudCode" placeholder="메일로 온 숫자 6개" inputmode="numeric" autocomplete="one-time-code" maxlength="6">', '<input type="text" id="cloudCode" placeholder="메일로 온 숫자" inputmode="numeric" autocomplete="one-time-code" maxlength="10">')
 h = h.replace('메일로 온 숫자를 아래에 넣어 주세요.', '메일로 온 숫자를 아래에 넣어 주세요.')
@@ -117,6 +118,7 @@ reps = [
  (' for(const st of G.stars){if(rising&&rising.star===st)continue;', ' for(const st of (lanternMode?[]:G.stars)){if(rising&&rising.star===st)continue;'),
  ('  for (const st of G.stars) { if (Math.hypot(st.x*LW*P - x, st.y*LH*P - y)', '  for (const st of (lanternMode ? [] : G.stars)) { if (Math.hypot(st.x*LW*P - x, st.y*LH*P - y)'),
  ('  $("yardSub").textContent = one && one.motto ? one.motto : (one ? `${breedOf(one.species, one.breed).name} · 꽃 ${G.blooms||0}송이` : `${G.family.length}마리 · 꽃 ${G.blooms||0}송이`);', '  $("yardSub").textContent = one && one.motto ? one.motto : (one ? `${breedOf(one.species, one.breed).name} · 꽃 ${G.blooms||0}송이 · 온기 ${G.warmth||0}` : `${G.family.length}마리 · 꽃 ${G.blooms||0}송이 · 온기 ${G.warmth||0}`);'),
+ ('  bctx.imageSmoothingEnabled = true; bctx.clearRect(0,0,bcv.width,bcv.height); drawArtImage(bctx,cv, 0, 0, bcv.width, bcv.height);\n', '  if (now - (window.__bloomAt || 0) > 200) { window.__bloomAt = now; bctx.imageSmoothingEnabled = true; bctx.clearRect(0,0,bcv.width,bcv.height); drawArtImage(bctx,cv, 0, 0, bcv.width, bcv.height); }   // the soft glow changes slowly: refresh it 5x a second, not every frame\n'),
  ('function spawnGlow(){ glows.push(', 'function spawnGlow(){ if (lanternMode) return; glows.push('),
  ('function drawBubble(){\n', 'function drawBubble(){\n if(lanternMode)return;\n'),
  ('  drawBgLine(dt);\n', '  if (!lanternMode) drawBgLine(dt);\n'),
@@ -125,6 +127,10 @@ reps = [
 for a, b in reps:
     if b in s: continue
     must(s, a); s = s.replace(a, b, 1)
+REPS_SPEED = [(' CLAY_ART_DATA.forEach((atlas,index)=>{\n  const im=new Image();clayImages.push(im);', ' CLAY_ART_DATA.forEach((atlas,index)=>{ const go=()=>{\n  const im=new Image();clayImages.push(im);'), ("  im.onerror=()=>{clayFailed=true;console.error('Clay art could not load',index);};im.src=atlas.url;\n });", "  im.onerror=()=>{clayFailed=true;console.error('Clay art could not load',index);};im.src=atlas.url;};\n  // start-up speed: sheets for animals in this yard first, the rest a little later\n  const mine=new Set(fam().map(p=>p.species+'/'+p.breed)),kinds=new Set(fam().map(p=>p.species));\n  const need=setupOpen||!G.set||/[?&]visit=/.test(location.search)||Object.keys(atlas.entries).some(k=>{const id=k.split('|')[0];return mine.has(id)||kinds.has(id.split('/')[0])&&!fam().some(p=>p.breed);});\n  if(need)go();else setTimeout(go,4500+index*600);\n });"), (' for(const [key,url]of Object.entries(SCENE_ART.backgrounds)){\n  const im=new Image();im.onload=()=>{sceneBackgrounds.set(key,im);};im.src=url;\n }', " const nowSky=sceneTimeLayers(hourNow()).slice(0,2);\n for(const [key,url]of Object.entries(SCENE_ART.backgrounds)){\n  const go=()=>{const im=new Image();im.onload=()=>{sceneBackgrounds.set(key,im);};im.src=url;};\n  if(nowSky.includes(key))go();else setTimeout(go,5000);   // other times of day aren't needed right away\n }"), ('\nfor(const p of fam())requestBend(p);\n\n', '\nsetTimeout(()=>{for(const p of fam())requestBend(p);},6000);   // only needed once they eat or play\n\n'), ('for(const p of fam())requestReach(p);', 'setTimeout(()=>{for(const p of fam())requestReach(p);},7000);'), ('for(const p of fam())requestCrouch(p);', 'setTimeout(()=>{for(const p of fam())requestCrouch(p);},8000);')]
+for _a, _b in REPS_SPEED:
+    if _b in s: continue
+    must(s, _a); s = s.replace(_a, _b, 1)
 mk_js = '\n/* ===== yard sharing + sky lanterns (Claude) ====='
 s = s.rstrip(); assert s.endswith('})();')
 if mk_js in s: s = s[:s.index(mk_js)] + '\n})();'
