@@ -2865,6 +2865,8 @@ if (/debug/.test(location.hash + location.search)) enableScreenCheck();
 
 
 
+
+
 /* ===== yard sharing + sky lanterns (Claude) =====
  * Owner makes a share code; anyone with the code sees the yard read-only and can only launch sky lanterns.
  * Visitors never touch their own saved yard: save() is a no-op while visiting (window.__syVisit). */
@@ -2920,19 +2922,27 @@ function lanternSpot(l){
 function drawSkyLanterns(t){
   lanternHits = [];
   if (!lanternMode || !lanterns.length || !W) return;
-  const top = 96, bot = Math.max(top + 60, groundY*0.8), now = performance.now();
-  const glowA = 0.45 + 0.55*(typeof NIGHT === "number" ? NIGHT : 0);
-  mctx.save(); mctx.imageSmoothingEnabled = true;
-  lanterns.slice(0, 40).forEach(l => {
-    const q = lanternSpot(l), s = (0.55 + 0.45*q.u3) * Math.min(1.25, Math.max(0.8, W/420));
-    let x = (0.07 + 0.86*q.u1)*W + Math.sin(t*0.23 + q.u4*9)*5, y = top + q.u2*(bot - top) + Math.sin(t*0.6 + q.u1*6)*3;
-    let a = 1;
-    if (l.born) { const p = Math.min(1, (now - l.born)/5200), e = 1 - Math.pow(1 - p, 3); y = (groundY + 40) + (y - groundY - 40)*e; a = Math.min(1, p*3); if (p >= 1) l.born = 0; }
-    const w = 26*s, h = 34*s, gr = 120*s;
-    mctx.globalAlpha = a*glowA; mctx.drawImage(lanternGlow, x - gr/2, y - gr/2, gr, gr);
-    mctx.globalAlpha = a; mctx.drawImage(lanternArt, x - w*0.62, y - h*0.62, w*1.23, h*1.23);
-    lanternHits.push({l, x, y, r: Math.max(22, 20*s)});
+  // depth: the newest lantern is close (big, low, bright); each older one has drifted further away (smaller, higher, fainter, toward the middle)
+  const list = lanterns.slice(0, 40), n = list.length, top = 92, bot = Math.max(top + 80, groundY*0.86), now = performance.now(), cx = W/2;
+  const glowA = 0.45 + 0.55*(typeof NIGHT === "number" ? NIGHT : 0), base = Math.min(1.35, Math.max(0.85, W/400));
+  const placed = list.map((l, i) => {
+    const q = lanternSpot(l), near = n <= 1 ? 1 : Math.max(0.1, Math.pow(0.87, i));
+    const s = base*(0.3 + 0.9*near);
+    const u = (q.u1*0.35 + i*0.618034) % 1, hx = (0.09 + 0.82*u)*W;          // golden-ratio spread so neighbours don't pile up
+    let x = cx + (hx - cx)*(0.6 + 0.4*near) + Math.sin(t*0.23 + q.u4*9)*5*near;
+    const yn = Math.max(0.02, Math.min(0.96, 0.05 + 0.78*near + (q.u2 - 0.5)*(0.12 + 0.3*(1 - near))));
+    let y = top + yn*(bot - top) + Math.sin(t*0.6 + q.u1*6)*3*(0.4 + 0.6*near);
+    let a = 0.3 + 0.7*near;
+    if (l.born) { const p = Math.min(1, (now - l.born)/5200), e = 1 - Math.pow(1 - p, 3); y = (groundY + 40) + (y - groundY - 40)*e; a *= Math.min(1, p*3); if (p >= 1) l.born = 0; }
+    return {l, x, y, s, a, near};
   });
+  mctx.save(); mctx.imageSmoothingEnabled = true;
+  for (let k = placed.length - 1; k >= 0; k--) {           // far ones first, the near ones on top
+    const {l, x, y, s, a, near} = placed[k], w = 26*s, h = 34*s, gr = 120*s;
+    mctx.globalAlpha = a*glowA*(0.55 + 0.45*near); mctx.drawImage(lanternGlow, x - gr/2, y - gr/2, gr, gr);
+    mctx.globalAlpha = a; mctx.drawImage(lanternArt, x - w*0.62, y - h*0.62, w*1.23, h*1.23);
+    lanternHits.push({l, x, y, r: Math.max(18, 20*s)});
+  }
   mctx.restore();
 }
 
