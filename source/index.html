@@ -14,7 +14,7 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="icon" type="image/png" href="assets/asset-01.png?v=rainbow">
 <link rel="apple-touch-icon" href="assets/asset-02.png?v=rainbow">
-<link rel="stylesheet" href="./app.css?v=20261118-1">
+<link rel="stylesheet" href="./app.css?v=20261118-2">
 </head>
 <body>
 
@@ -35,6 +35,7 @@
         <div class="bar"><i id="warmBar" style="width:0%"></i></div>
         <div class="next" id="warmNext">다음: 꽃밭</div>
       </div>
+      <button class="iconbtn px" id="lanternBtn" aria-label="풍등 보기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="M8.2 4.5h7.6c1.6 2 2.4 4.6 2.2 7.6-.2 3-1.2 5.3-2.6 6.9H8.6C7.2 17.4 6.2 15.1 6 12.1c-.2-3 .6-5.6 2.2-7.6z"/><path d="M10.4 4.6c-.8 2.4-.9 9.4.2 14.3M13.6 4.6c.8 2.4.9 9.4-.2 14.3"/><path d="M9.4 21h5.2"/></svg></button>
       <button class="iconbtn px" id="soundBtn" aria-pressed="false" aria-label="잔잔한 소리 켜기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18V5l11-2v13"/><ellipse cx="6" cy="18" rx="3" ry="2.5"/><ellipse cx="17" cy="16" rx="3" ry="2.5"/></svg>
       </button>
       <button class="iconbtn px" id="settingsBtn" aria-label="마당 설정"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h5m4 0h9M3 12h11m4 0h3M3 18h3m4 0h11"/><circle cx="10" cy="6" r="2"/><circle cx="16" cy="12" r="2"/><circle cx="8" cy="18" r="2"/></svg>
@@ -45,6 +46,7 @@
   <div class="toast px" id="toast" role="status" aria-live="polite"></div>
   <div class="hint px" id="hint">아이를 살짝 눌러 쓰다듬어 주세요</div>
 
+  <div class="visit-bar px" id="lanternBar" hidden><span id="lanternCount">풍등</span><button type="button" class="btn primary" id="lanternLaunch">풍등 띄우기</button><button type="button" class="btn" id="lanternExit">나가기</button></div>
   <div class="visit-bar px" id="visitBar" hidden><span id="visitWho">친구 마당에 놀러 왔어요</span><button type="button" class="btn primary" id="visitLantern">풍등 띄우기</button><button type="button" class="btn" id="visitHome">내 마당으로</button></div>
   <div class="lantern-tag px" id="lanternTag" hidden><span id="lanternTagText"></span><button type="button" class="btn" id="lanternDel" hidden>내리기</button></div>
   <div class="veil" id="lanternVeil" hidden>
@@ -257,7 +259,7 @@
           </div>
         </div>
         <label class="share-check"><input type="checkbox" id="sharePhotos"> 아이 사진도 보여주기</label>
-        <div class="btns"><button type="button" class="btn" id="lanternMine">나도 풍등 띄우기</button></div>
+        <div class="btns"><button type="button" class="btn" id="lanternMine">풍등 보러 가기</button></div>
         <h3 class="sub">친구 마당 놀러 가기</h3>
         <div class="share-visit"><input type="text" id="visitCodeInput" maxlength="8" placeholder="공유 코드 6자리" autocomplete="off" autocapitalize="characters"><button type="button" class="btn" id="visitGo">놀러 가기</button></div>
       </section>
@@ -336,6 +338,6 @@
 (function(){var t0=Date.now();window.addEventListener("error",function(){if(Date.now()-t0>8000)return;try{var g=JSON.parse(localStorage.getItem("starlight-yard-v1")||"null");if(g&&g.set&&g.family&&g.family.length){var v=document.getElementById("setupVeil");if(v)v.hidden=true;var d=document.getElementById("dock");if(d)d.hidden=false;}}catch(e){}});})();</script>
 <div id="visitCover"><p id="visitCoverText">친구 마당으로 가는 중…</p><div class="btns" style="justify-content:center"><button type="button" class="btn" id="visitCoverHome" hidden>내 마당으로</button></div></div>
 <script>if(/[?&]visit=/.test(location.search))document.documentElement.classList.add("visiting");</script>
-<script src="./app.js?v=20261118-1"></script>
+<script src="./app.js?v=20261118-2"></script>
 </body>
 </html>

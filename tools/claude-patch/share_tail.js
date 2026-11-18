@@ -13,6 +13,7 @@ async function syRpc(fn, args){
 const syErr = (e) => { const m = String(e && e.message || e); return /slow_down/.test(m) ? "잠시 뒤에 다시 띄워 주세요" : /no_yard|not found/i.test(m) ? "공유가 끝난 마당이에요" : /too_big/.test(m) ? "사진이 너무 커서 공유할 수 없어요. 사진 보여주기를 꺼 주세요" : "연결이 잠깐 불안정해요. 조금 뒤에 다시 해 주세요"; };
 const VISIT = (() => { const m = /[?&]visit=([A-Za-z0-9]{4,10})/.exec(location.search); return m ? m[1].toUpperCase() : null; })();
 let lanterns = [];          // {id, name, by_owner, at, born?}
+var lanternMode = false;    // lanterns are only shown in this calm view (letters stay in the normal sky)
 const VKEY = "starlight-yard-visitor";
 const vname = () => { try { return localStorage.getItem(VKEY) || ""; } catch (e) { return ""; } };
 
@@ -45,7 +46,7 @@ function lanternSpot(l){
 }
 function drawSkyLanterns(t){
   lanternHits = [];
-  if (!lanterns.length || !W) return;
+  if (!lanternMode || !lanterns.length || !W) return;
   const top = 96, bot = Math.max(top + 60, groundY*0.8), now = performance.now();
   const glowA = 0.45 + 0.55*(typeof NIGHT === "number" ? NIGHT : 0);
   mctx.save(); mctx.imageSmoothingEnabled = true;
@@ -88,12 +89,12 @@ $("lanternDel").addEventListener("click", async () => {
 (() => {
   const stage = document.querySelector(".stage");
   stage.addEventListener("pointerdown", (ev) => {
-    const inUi = ev.target.closest && ev.target.closest(".visit-bar,.veil,.lantern-tag,#visitCover,.hud,.title,.toast");
-    if (VISIT && inUi) return;
-    if (!VISIT && (ev.target !== cv || (typeof decoEditing !== "undefined" && decoEditing))) return;
+    if (!lanternMode) return;
+    const inUi = ev.target.closest && ev.target.closest(".visit-bar,.veil,.lantern-tag,#visitCover,.toast");
+    if (inUi) return;
     const r = cv.getBoundingClientRect(), x = (ev.clientX - r.left)/camZ, y = (ev.clientY - r.top)/camZ;
     for (let i = lanternHits.length - 1; i >= 0; i--) { const h = lanternHits[i]; if (Math.hypot(h.x - x, h.y - y) < h.r) { ev.stopPropagation(); showLanternTag(h.l, ev.clientX, ev.clientY); return; } }
-    if (VISIT) { ev.stopPropagation(); if (ev.target === cv) ev.preventDefault(); }
+    ev.stopPropagation(); if (ev.target === cv) ev.preventDefault();
   }, true);
 })();
 
@@ -148,7 +149,7 @@ $("shareStopYes").addEventListener("click", async () => {
   try { await syRpc("sy_stop_share", {p_code: G.share.code, p_secret: G.share.secret}); } catch (e) { toast(syErr(e)); return; }
   delete G.share; save(); lanterns = (G.lanterns || []).slice(); renderShare(); toast("공유를 그만했어요");
 });
-$("lanternMine").addEventListener("click", () => { closeVeil("settingsVeil"); askLantern(); });
+$("lanternMine").addEventListener("click", () => { closeVeil("settingsVeil"); enterLanternMode(); });
 $("visitGo").addEventListener("click", () => {
   const c = $("visitCodeInput").value.replace(/[^A-Za-z0-9]/g, "").toUpperCase();
   if (c.length < 4) { toast("공유 코드를 확인해 주세요"); return; }
@@ -205,10 +206,31 @@ if (VISIT) {
     renderHud();
     lanterns = (y.lanterns || []).slice();
     $("visitWho").textContent = `${yardTitleText()}에 놀러 왔어요`;
-    $("dock").hidden = true; $("visitBar").hidden = false;
+    $("dock").hidden = true; $("visitBar").hidden = false; lanternMode = true; document.documentElement.classList.add("lantern-mode");
     cover.classList.add("done"); setTimeout(() => cover.remove(), 600);
-    setHint("하늘에 풍등을 띄워 마음을 전해 보세요");
     setInterval(() => { if (!document.hidden) pullLanterns(); }, 45000);
   })();
 }
 function yardTitleText(){ try { return ($("yardName") || {}).textContent || "친구 마당"; } catch (e) { return "친구 마당"; } }
+
+/* ---------- lantern mode: only the pets, the yard and the lanterns ---------- */
+function lanternCountText(){ const n = lanterns.length; $("lanternCount").textContent = n ? `풍등 ${n}개` : "아직 풍등이 없어요"; }
+function enterLanternMode(){
+  if (VISIT || lanternMode) return;
+  if (typeof decoEditing !== "undefined" && decoEditing) setDecoEditing(false);
+  try { setBallMode(false); } catch (e) {}
+  lanternMode = true; glows = []; bubble = null;
+  document.documentElement.classList.add("lantern-mode");
+  $("dock").hidden = true; $("lanternBar").hidden = false; lanternCountText();
+  if (G.share) pullLanterns().then(lanternCountText);
+  if (!G.lanternTip) { G.lanternTip = true; save(); setTimeout(() => toast("풍등을 누르면 누가 띄웠는지 보여요"), 500); }
+}
+function exitLanternMode(){
+  lanternMode = false; $("lanternTag").hidden = true;
+  document.documentElement.classList.remove("lantern-mode");
+  $("lanternBar").hidden = true; $("dock").hidden = false;
+}
+$("lanternBtn").addEventListener("click", enterLanternMode);
+$("lanternExit").addEventListener("click", exitLanternMode);
+$("lanternLaunch").addEventListener("click", askLantern);
+setInterval(() => { if (lanternMode && !VISIT) lanternCountText(); }, 1000);

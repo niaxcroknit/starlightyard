@@ -372,3 +372,5 @@ html.visiting #visitCover{display:grid}
 #visitCover.done{opacity:0;pointer-events:none}
 #visitCover p{margin:0;font-size:15px;color:#645163;text-align:center;padding:0 24px;word-break:keep-all}
 html.visiting #dock,html.visiting #settingsBtn{display:none!important}
+html.lantern-mode .top,html.lantern-mode #dock,html.lantern-mode #hint{display:none!important}
+#lanternBtn svg{width:22px;height:22px}

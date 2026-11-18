@@ -51,6 +51,15 @@ if 'id="visitCover"' not in h:
     h = h.replace(a, '''<div id="visitCover"><p id="visitCoverText">친구 마당으로 가는 중…</p><div class="btns" style="justify-content:center"><button type="button" class="btn" id="visitCoverHome" hidden>내 마당으로</button></div></div>
 <script>if(/[?&]visit=/.test(location.search))document.documentElement.classList.add("visiting");</script>
 ''' + a, 1)
+if 'id="lanternBtn"' not in h:
+    a = '      <button class="iconbtn px" id="soundBtn"'
+    must(h, a)
+    h = h.replace(a, '      <button class="iconbtn px" id="lanternBtn" aria-label="풍등 보기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="M8.2 4.5h7.6c1.6 2 2.4 4.6 2.2 7.6-.2 3-1.2 5.3-2.6 6.9H8.6C7.2 17.4 6.2 15.1 6 12.1c-.2-3 .6-5.6 2.2-7.6z"/><path d="M10.4 4.6c-.8 2.4-.9 9.4.2 14.3M13.6 4.6c.8 2.4.9 9.4-.2 14.3"/><path d="M9.4 21h5.2"/></svg></button>\n' + a, 1)
+if 'id="lanternBar"' not in h:
+    a = '  <div class="visit-bar px" id="visitBar" hidden>'
+    must(h, a)
+    h = h.replace(a, '  <div class="visit-bar px" id="lanternBar" hidden><span id="lanternCount">풍등</span><button type="button" class="btn primary" id="lanternLaunch">풍등 띄우기</button><button type="button" class="btn" id="lanternExit">나가기</button></div>\n' + a, 1)
+h = h.replace('id="lanternMine">나도 풍등 띄우기</button>', 'id="lanternMine">풍등 보러 가기</button>')
 open(P('index.html'), 'w').write(h)
 
 s = open(P('app.js')).read()
@@ -59,13 +68,20 @@ reps = [
  ('function flush(){\n  if (!docRef) return;', 'function flush(){\n  if (!docRef || window.__syVisit) return;'),
  ('      if (r && (r.family || r.pet) && (r.updatedAt||0) > (G.updatedAt||0)) {', '      if (!window.__syVisit && r && (r.family || r.pet) && (r.updatedAt||0) > (G.updatedAt||0)) {'),
  ('  drawClayBackground(h,t);\n', '  drawClayBackground(h,t);\n  drawSkyLanterns(t);\n'),
+ ('  for (const st of G.stars) {\n    if (rising && rising.star === st) continue;', '  for (const st of (lanternMode ? [] : G.stars)) {\n    if (rising && rising.star === st) continue;'),
+ (' for(const st of G.stars){if(rising&&rising.star===st)continue;', ' for(const st of (lanternMode?[]:G.stars)){if(rising&&rising.star===st)continue;'),
+ ('  for (const st of G.stars) { if (Math.hypot(st.x*LW*P - x, st.y*LH*P - y)', '  for (const st of (lanternMode ? [] : G.stars)) { if (Math.hypot(st.x*LW*P - x, st.y*LH*P - y)'),
+ ('function spawnGlow(){ glows.push(', 'function spawnGlow(){ if (lanternMode) return; glows.push('),
+ ('function drawBubble(){\n', 'function drawBubble(){\n if(lanternMode)return;\n'),
+ ('  drawBgLine(dt);\n', '  if (!lanternMode) drawBgLine(dt);\n'),
 ]
 for a, b in reps:
     if b in s: continue
     must(s, a); s = s.replace(a, b, 1)
-if 'yard sharing + sky lanterns (Claude)' not in s:
-    s = s.rstrip(); assert s.endswith('})();')
-    s = s[:-5] + open(os.path.join(here, 'share_tail.js')).read() + '\n})();\n'
+mk_js = '\n/* ===== yard sharing + sky lanterns (Claude) ====='
+s = s.rstrip(); assert s.endswith('})();')
+if mk_js in s: s = s[:s.index(mk_js)] + '\n})();'
+s = s[:-5] + open(os.path.join(here, 'share_tail.js')).read() + '\n})();\n'
 open(P('app.js'), 'w').write(s)
 
 c = open(P('app.css')).read()

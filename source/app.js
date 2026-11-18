@@ -1004,7 +1004,7 @@ function updateTreats(dt){
 }
 
 /* drifting lights */
-function spawnGlow(){ glows.push({x:rand(W*0.06,W*0.94), y:rand(H*0.3, groundY + dMax*0.8), vx:rand(-14,14), vy:rand(-8,8), p:rand(0,6), life:0, kind: NIGHT > 0.45 ? "fly" : "seed"}); }
+function spawnGlow(){ if (lanternMode) return; glows.push({x:rand(W*0.06,W*0.94), y:rand(H*0.3, groundY + dMax*0.8), vx:rand(-14,14), vy:rand(-8,8), p:rand(0,6), life:0, kind: NIGHT > 0.45 ? "fly" : "seed"}); }
 function updateGlows(dt){
   glowTimer -= dt;
   if (glows.length < 6 && glowTimer <= 0) { spawnGlow(); glowTimer = rand(1.5, 4); }
@@ -1087,7 +1087,7 @@ function legacyDrawBackdrop(pal, h, t){
   ctx.globalAlpha = 0.92 - NIGHT*0.25; for (const c of clouds) puff(c.x, c.y, c.r, cols); ctx.globalAlpha = 1;
   // memory stars
   const now = performance.now();
-  for (const st of G.stars) {
+  for (const st of (lanternMode ? [] : G.stars)) {
     if (rising && rising.star === st) continue;
     const x = st.x*LW, y = st.y*LH, b0 = bornAt.get(st.id), born = b0 ? clamp((now-b0)/1200, 0, 1) : 1;
     const a = (0.6 + 0.4*NIGHT) * born, tw = Math.sin(t*1.7 + st.x*40);
@@ -1384,7 +1384,7 @@ function frame(now){
   if (NIGHT > 0.02) { mctx.fillStyle = `rgba(28,26,78,${0.3*NIGHT})`; mctx.beginPath(); mctx.moveTo(0, H); for (let x=0;x<LW;x++) mctx.lineTo(x*P, tintTop[x]*P); mctx.lineTo(W, tintTop[LW-1]*P); mctx.lineTo(W, H); mctx.fill(); }
   if (lamp && NIGHT > 0.05) { mctx.save(); mctx.globalCompositeOperation = "lighter"; glow(mctx, lamp.x, lamp.y, 36*lamp.k, "255,196,120", 0.42*NIGHT); mctx.restore(); }
   drawOverlayFx(); if (has("butterfly")) drawButterflies(t, dt);
-  drawBgLine(dt);
+  if (!lanternMode) drawBgLine(dt);
   bctx.imageSmoothingEnabled = true; bctx.clearRect(0,0,bcv.width,bcv.height); drawArtImage(bctx,cv, 0, 0, bcv.width, bcv.height);
   mctx.save(); mctx.imageSmoothingEnabled = true; mctx.globalCompositeOperation = "screen"; mctx.globalAlpha = 0.2 + 0.14*NIGHT; drawArtImage(mctx,bcv, 0, 0, W, H); mctx.restore();
   if (vignette) { mctx.fillStyle = vignette; mctx.fillRect(0, 0, W, H); }
@@ -1396,7 +1396,7 @@ function frame(now){
 cv.addEventListener("pointerdown", (ev) => {
   if (setupOpen) return;
   const r = cv.getBoundingClientRect(), x = (ev.clientX - r.left)/camZ, y = (ev.clientY - r.top)/camZ;
-  for (const st of G.stars) { if (Math.hypot(st.x*LW*P - x, st.y*LH*P - y) < Math.max(22, 6*P)) { openRead(st.id); return; } }
+  for (const st of (lanternMode ? [] : G.stars)) { if (Math.hypot(st.x*LW*P - x, st.y*LH*P - y) < Math.max(22, 6*P)) { openRead(st.id); return; } }
   for (let i=glows.length-1;i>=0;i--) { if (Math.hypot(glows[i].x - x, glows[i].y - y) < Math.max(26, 7*P)) { collectGlow(i); return; } }
   const byFront = [...ents].sort((a,b) => b.depth - a.depth);
   for (const h of poopHits) if (Math.hypot(h.x - x, h.y - y) < h.r) { cleanPoop(h.pp); return; }
@@ -2179,7 +2179,7 @@ function drawClayBackground(h,t){
   glow(mctx,x,y,size*4,'255,225,178',opacity*.3);mctx.globalAlpha=opacity;const star=BM.star();drawArtImage(mctx,star,x-size/2,y-size/2,size,size);mctx.globalAlpha=1;
  };
  const now=performance.now();
- for(const st of G.stars){if(rising&&rising.star===st)continue;const born=bornAt.get(st.id),opacity=(.6+.4*NIGHT)*(born?clamp((now-born)/1200,0,1):1);paintStar(st.x*LW*P,st.y*LH*P,P*5,opacity);}
+ for(const st of (lanternMode?[]:G.stars)){if(rising&&rising.star===st)continue;const born=bornAt.get(st.id),opacity=(.6+.4*NIGHT)*(born?clamp((now-born)/1200,0,1):1);paintStar(st.x*LW*P,st.y*LH*P,P*5,opacity);}
  if(rising&&!rising.hold){const e=1-Math.pow(1-rising.t,3);paintStar(lerp(rising.x0,rising.x1,e),lerp(rising.y0,rising.y1,e)-Math.sin(e*Math.PI)*40*S,P*5,1);}
  mctx.restore();
 }
@@ -2194,6 +2194,7 @@ function drawOverlayFx(){
  for(const h of hearts){mctx.save();mctx.globalAlpha=clamp(h.t,0,1);const b=BM.heart();drawArtImage(mctx,b,h.x-b.width*P/2,h.y,b.width*P,b.height*P);mctx.restore();}
 }
 function drawBubble(){
+ if(lanternMode)return;
  if(!bubble||!bubble.e||bubble.e._top==null||breathing)return;
  const e=bubble.e;let fs=P>=3?18:15;mctx.font=`500 ${fs}px ${FONT}`;while(fs>11&&mctx.measureText(bubble.text).width+24>W-24){fs--;mctx.font=`500 ${fs}px ${FONT}`;}
  const w=mctx.measureText(bubble.text).width+24,h=fs+20,bx=clamp(e.x-w/2,10,W-w-10),by=Math.max(82,e._top-h-12);
@@ -2846,6 +2847,7 @@ if (/debug/.test(location.hash + location.search)) enableScreenCheck();
 { let taps = 0, tt = null; const t = document.querySelector(".title"); if (t) t.addEventListener("click", () => { taps++; clearTimeout(tt); tt = setTimeout(() => taps = 0, 1200); if (taps >= 5) { taps = 0; enableScreenCheck(); } }); }
 
 
+
 /* ===== yard sharing + sky lanterns (Claude) =====
  * Owner makes a share code; anyone with the code sees the yard read-only and can only launch sky lanterns.
  * Visitors never touch their own saved yard: save() is a no-op while visiting (window.__syVisit). */
@@ -2860,6 +2862,7 @@ async function syRpc(fn, args){
 const syErr = (e) => { const m = String(e && e.message || e); return /slow_down/.test(m) ? "잠시 뒤에 다시 띄워 주세요" : /no_yard|not found/i.test(m) ? "공유가 끝난 마당이에요" : /too_big/.test(m) ? "사진이 너무 커서 공유할 수 없어요. 사진 보여주기를 꺼 주세요" : "연결이 잠깐 불안정해요. 조금 뒤에 다시 해 주세요"; };
 const VISIT = (() => { const m = /[?&]visit=([A-Za-z0-9]{4,10})/.exec(location.search); return m ? m[1].toUpperCase() : null; })();
 let lanterns = [];          // {id, name, by_owner, at, born?}
+var lanternMode = false;    // lanterns are only shown in this calm view (letters stay in the normal sky)
 const VKEY = "starlight-yard-visitor";
 const vname = () => { try { return localStorage.getItem(VKEY) || ""; } catch (e) { return ""; } };
 
@@ -2892,7 +2895,7 @@ function lanternSpot(l){
 }
 function drawSkyLanterns(t){
   lanternHits = [];
-  if (!lanterns.length || !W) return;
+  if (!lanternMode || !lanterns.length || !W) return;
   const top = 96, bot = Math.max(top + 60, groundY*0.8), now = performance.now();
   const glowA = 0.45 + 0.55*(typeof NIGHT === "number" ? NIGHT : 0);
   mctx.save(); mctx.imageSmoothingEnabled = true;
@@ -2935,12 +2938,12 @@ $("lanternDel").addEventListener("click", async () => {
 (() => {
   const stage = document.querySelector(".stage");
   stage.addEventListener("pointerdown", (ev) => {
-    const inUi = ev.target.closest && ev.target.closest(".visit-bar,.veil,.lantern-tag,#visitCover,.hud,.title,.toast");
-    if (VISIT && inUi) return;
-    if (!VISIT && (ev.target !== cv || (typeof decoEditing !== "undefined" && decoEditing))) return;
+    if (!lanternMode) return;
+    const inUi = ev.target.closest && ev.target.closest(".visit-bar,.veil,.lantern-tag,#visitCover,.toast");
+    if (inUi) return;
     const r = cv.getBoundingClientRect(), x = (ev.clientX - r.left)/camZ, y = (ev.clientY - r.top)/camZ;
     for (let i = lanternHits.length - 1; i >= 0; i--) { const h = lanternHits[i]; if (Math.hypot(h.x - x, h.y - y) < h.r) { ev.stopPropagation(); showLanternTag(h.l, ev.clientX, ev.clientY); return; } }
-    if (VISIT) { ev.stopPropagation(); if (ev.target === cv) ev.preventDefault(); }
+    ev.stopPropagation(); if (ev.target === cv) ev.preventDefault();
   }, true);
 })();
 
@@ -2995,7 +2998,7 @@ $("shareStopYes").addEventListener("click", async () => {
   try { await syRpc("sy_stop_share", {p_code: G.share.code, p_secret: G.share.secret}); } catch (e) { toast(syErr(e)); return; }
   delete G.share; save(); lanterns = (G.lanterns || []).slice(); renderShare(); toast("공유를 그만했어요");
 });
-$("lanternMine").addEventListener("click", () => { closeVeil("settingsVeil"); askLantern(); });
+$("lanternMine").addEventListener("click", () => { closeVeil("settingsVeil"); enterLanternMode(); });
 $("visitGo").addEventListener("click", () => {
   const c = $("visitCodeInput").value.replace(/[^A-Za-z0-9]/g, "").toUpperCase();
   if (c.length < 4) { toast("공유 코드를 확인해 주세요"); return; }
@@ -3052,12 +3055,33 @@ if (VISIT) {
     renderHud();
     lanterns = (y.lanterns || []).slice();
     $("visitWho").textContent = `${yardTitleText()}에 놀러 왔어요`;
-    $("dock").hidden = true; $("visitBar").hidden = false;
+    $("dock").hidden = true; $("visitBar").hidden = false; lanternMode = true; document.documentElement.classList.add("lantern-mode");
     cover.classList.add("done"); setTimeout(() => cover.remove(), 600);
-    setHint("하늘에 풍등을 띄워 마음을 전해 보세요");
     setInterval(() => { if (!document.hidden) pullLanterns(); }, 45000);
   })();
 }
 function yardTitleText(){ try { return ($("yardName") || {}).textContent || "친구 마당"; } catch (e) { return "친구 마당"; } }
+
+/* ---------- lantern mode: only the pets, the yard and the lanterns ---------- */
+function lanternCountText(){ const n = lanterns.length; $("lanternCount").textContent = n ? `풍등 ${n}개` : "아직 풍등이 없어요"; }
+function enterLanternMode(){
+  if (VISIT || lanternMode) return;
+  if (typeof decoEditing !== "undefined" && decoEditing) setDecoEditing(false);
+  try { setBallMode(false); } catch (e) {}
+  lanternMode = true; glows = []; bubble = null;
+  document.documentElement.classList.add("lantern-mode");
+  $("dock").hidden = true; $("lanternBar").hidden = false; lanternCountText();
+  if (G.share) pullLanterns().then(lanternCountText);
+  if (!G.lanternTip) { G.lanternTip = true; save(); setTimeout(() => toast("풍등을 누르면 누가 띄웠는지 보여요"), 500); }
+}
+function exitLanternMode(){
+  lanternMode = false; $("lanternTag").hidden = true;
+  document.documentElement.classList.remove("lantern-mode");
+  $("lanternBar").hidden = true; $("dock").hidden = false;
+}
+$("lanternBtn").addEventListener("click", enterLanternMode);
+$("lanternExit").addEventListener("click", exitLanternMode);
+$("lanternLaunch").addEventListener("click", askLantern);
+setInterval(() => { if (lanternMode && !VISIT) lanternCountText(); }, 1000);
 
 })();
