@@ -98,7 +98,7 @@ $("cloudSend").addEventListener("click", async () => {
 });
 $("cloudVerify").addEventListener("click", async () => {
   const code = $("cloudCode").value.replace(/\D/g, "");
-  if (code.length < 6) { toast("메일로 받은 숫자 6개를 넣어 주세요"); return; }
+  if (code.length < 6) { toast("메일로 받은 숫자를 모두 넣어 주세요"); return; }
   const b = $("cloudVerify"); b.disabled = true;
   try {
     const s = await sbFetch("/auth/v1/verify", {method: "POST", headers: authHeaders(), body: JSON.stringify({type: "email", email: cloudEmail, token: code})});
