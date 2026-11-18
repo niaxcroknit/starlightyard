@@ -2856,6 +2856,9 @@ if (/debug/.test(location.hash + location.search)) enableScreenCheck();
 
 
 
+
+
+
 /* ===== yard sharing + sky lanterns (Claude) =====
  * Owner makes a share code; anyone with the code sees the yard read-only and can only launch sky lanterns.
  * Visitors never touch their own saved yard: save() is a no-op while visiting (window.__syVisit). */
@@ -3178,13 +3181,20 @@ function renderCloud(){
   $("cloudOff").hidden = on; $("cloudOn").hidden = !on;
   if (on) $("cloudStatus").textContent = `${cloud.email || "내 이메일"}로 저장하고 있어요.` + (cloudErr ? " " + cloudErr : cloudLast ? ` 마지막 저장 ${fmtWhen(cloudLast)}` : "");
 }
-$("settingsBtn").addEventListener("click", () => { renderCloud(); $("cloudCodeRow").hidden = true; });
+$("settingsBtn").addEventListener("click", () => { renderCloud(); const w = pendingPair(); $("cloudCodeRow").hidden = true; $("cloudWait").hidden = !w; });
 var cloudEmail = "";
 $("cloudSend").addEventListener("click", async () => {
   const em = $("cloudEmail").value.trim();
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em)) { toast("이메일 주소를 확인해 주세요"); return; }
   const b = $("cloudSend"); b.disabled = true;
-  try { await sbFetch("/auth/v1/otp", {method: "POST", headers: authHeaders(), body: JSON.stringify({email: em, create_user: true})}); cloudEmail = em; $("cloudCodeRow").hidden = false; $("cloudCode").value = ""; setTimeout(() => $("cloudCode").focus(), 60); toast("메일로 숫자 6개를 보냈어요"); }
+  try {
+    const pair = "x" + Array.from(crypto.getRandomValues(new Uint8Array(18)), v => v.toString(16).padStart(2, "0")).join("");
+    const back = location.origin + location.pathname + "?pair=" + pair;
+    await sbFetch("/auth/v1/otp?redirect_to=" + encodeURIComponent(back), {method: "POST", headers: authHeaders(), body: JSON.stringify({email: em, create_user: true})});
+    cloudEmail = em; try { localStorage.setItem(PKEY, JSON.stringify({id: pair, at: Date.now()})); } catch (e) {}
+    $("cloudWait").hidden = false;
+    toast("메일을 보냈어요. 메일 속 링크를 눌러 주세요"); waitPair();
+  }
   catch (e) { toast(e.status === 429 ? "메일을 너무 자주 보냈어요. 잠시 뒤에 다시 해 주세요" : "메일을 보내지 못했어요. 잠시 뒤에 다시 해 주세요"); }
   b.disabled = false;
 });
@@ -3205,6 +3215,46 @@ if (cloud && !window.__syVisit && !VISIT) { setTimeout(() => cloudReconcile(fals
 document.addEventListener("visibilitychange", () => { if (!document.hidden && cloud && cloudReady && !VISIT) { if (cloudDirty) cloudFlush(); } });
 window.addEventListener("pagehide", () => { if (cloudDirty) cloudFlush(); });
 $("setupCloud").hidden = !!G.set;
-$("setupCloud").addEventListener("click", () => { renderCloud(); $("cloudCodeRow").hidden = true; openVeil("settingsVeil"); setTimeout(() => { const s = document.querySelector(".cloud"); if (s) s.scrollIntoView({block: "center"}); $("cloudEmail").focus(); }, 80); });
+$("setupCloud").addEventListener("click", () => { renderCloud(); const w = pendingPair(); $("cloudCodeRow").hidden = true; $("cloudWait").hidden = !w; openVeil("settingsVeil"); setTimeout(() => { const s = document.querySelector(".cloud"); if (s) s.scrollIntoView({block: "center"}); $("cloudEmail").focus(); }, 80); });
+
+/* login link: Supabase sends a link (templates can't be edited on the free mail). The link opens in Safari with the session in the
+ * address; Safari hands it to the app that asked through a one-time pairing id, and the app picks it up by itself. */
+var PKEY = "starlight-yard-pair", pairTimer = null;
+function pendingPair(){ try { const p = JSON.parse(localStorage.getItem(PKEY) || "null"); return p && Date.now() - p.at < 20*60*1000 ? p : null; } catch (e) { return null; } }
+function sessionFrom(s){ return {access_token: s.access_token, refresh_token: s.refresh_token, expires_at: s.expires_at || (Date.now()/1000 + (s.expires_in || 3600)), email: s.user && s.user.email, uid: s.user && s.user.id}; }
+async function loggedIn(s){
+  cloud = sessionFrom(s); cloudStore(); try { localStorage.removeItem(PKEY); } catch (e) {}
+  clearInterval(pairTimer); pairTimer = null; $("cloudWait").hidden = true; $("cloudCodeRow").hidden = true; renderCloud();
+  toast("로그인했어요"); await cloudReconcile(true);
+}
+async function takePair(){
+  const p = pendingPair(); if (!p || cloud) { clearInterval(pairTimer); pairTimer = null; return; }
+  try {
+    const rt = await syRpc("sy_pair_take", {p_id: p.id}); if (!rt) return;
+    const s = await sbFetch("/auth/v1/token?grant_type=refresh_token", {method: "POST", headers: authHeaders(), body: JSON.stringify({refresh_token: rt})});
+    await loggedIn(s);
+  } catch (e) {}
+}
+function waitPair(){ clearInterval(pairTimer); pairTimer = setInterval(takePair, 3000); takePair(); }
+document.addEventListener("visibilitychange", () => { if (!document.hidden && pendingPair() && !cloud) waitPair(); });
+if (pendingPair() && !cloud && !VISIT) waitPair();
+/* this page was opened from the mail link */
+(async () => {
+  const h = new URLSearchParams(location.hash.replace(/^#/, "")), q = new URLSearchParams(location.search);
+  if (!h.get("access_token") && !h.get("error")) return;
+  const pair = q.get("pair"); history.replaceState(null, "", location.pathname);
+  if (h.get("error")) { toast("링크가 만료됐어요. 앱에서 메일을 다시 받아 주세요"); return; }
+  const at = h.get("access_token"), rt = h.get("refresh_token");
+  let user = null; try { user = await sbFetch("/auth/v1/user", {headers: Object.assign(authHeaders(), {Authorization: "Bearer " + at})}); } catch (e) {}
+  const mine = pendingPair();
+  if (pair && !(mine && mine.id === pair)) {
+    // opened in Safari, but the request came from the home-screen app: hand the login over, then sign in here too with a fresh session later
+    let ok = false; try { ok = await syRpc("sy_pair_put", {p_id: pair, p_refresh: rt}); } catch (e) {}
+    $("pairDoneText").textContent = ok ? "로그인됐어요. 이제 홈 화면의 별빛 마당 앱으로 돌아가 주세요. 앱이 알아서 이어받아요." : "로그인을 넘겨주지 못했어요. 앱에서 메일을 다시 받아 주세요.";
+    openVeil("pairVeil");
+    return;
+  }
+  await loggedIn({access_token: at, refresh_token: rt, expires_in: Number(h.get("expires_in")) || 3600, user});
+})();
 
 })();

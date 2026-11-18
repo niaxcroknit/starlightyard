@@ -69,7 +69,7 @@ if 'id="cloudTitle"' not in h:
         <h3 id="cloudTitle">서버에 저장</h3>
         <div id="cloudOff">
           <p class="small">이메일로 로그인하면 마당이 바뀔 때마다 서버에 자동으로 저장돼요. 휴대폰을 바꾸거나 앱을 다시 깔아도 같은 이메일로 로그인하면 그대로 돌아와요. 내 마당은 나만 볼 수 있어요.</p>
-          <div class="cloud-row"><input type="email" id="cloudEmail" placeholder="이메일 주소" autocomplete="email" inputmode="email"><button type="button" class="btn primary" id="cloudSend">숫자 받기</button></div>
+          <div class="cloud-row"><input type="email" id="cloudEmail" placeholder="이메일 주소" autocomplete="email" inputmode="email"><button type="button" class="btn primary" id="cloudSend">메일 받기</button></div>\n          <p class="small cloud-wait" id="cloudWait" hidden>메일함에서 <b>Sign in</b> 링크를 눌러 주세요. 사파리에서 열려도 괜찮아요. 이 앱이 알아서 로그인을 이어받아요.</p>
           <div class="cloud-row" id="cloudCodeRow" hidden><input type="text" id="cloudCode" placeholder="메일로 온 숫자 6개" inputmode="numeric" autocomplete="one-time-code" maxlength="6"><button type="button" class="btn primary" id="cloudVerify">확인</button></div>
         </div>
         <div id="cloudOn" hidden>
@@ -81,6 +81,11 @@ if 'id="cloudTitle"' not in h:
 if 'id="setupCloud"' not in h:
     i = h.index('<p class="lead" id="setupLead">'); j = h.index('</p>', i) + 4
     h = h[:j] + '\n      <button type="button" class="btn" id="setupCloud">전에 쓰던 마당이 있어요 · 이메일로 불러오기</button>' + h[j:]
+h = h.replace('<div class="cloud-row"><input type="email" id="cloudEmail" placeholder="이메일 주소" autocomplete="email" inputmode="email"><button type="button" class="btn primary" id="cloudSend">숫자 받기</button></div>', '<div class="cloud-row"><input type="email" id="cloudEmail" placeholder="이메일 주소" autocomplete="email" inputmode="email"><button type="button" class="btn primary" id="cloudSend">메일 받기</button></div>\\n          <p class="small cloud-wait" id="cloudWait" hidden>메일함에서 <b>Sign in</b> 링크를 눌러 주세요. 사파리에서 열려도 괜찮아요. 이 앱이 알아서 로그인을 이어받아요.</p>')
+if 'id="pairVeil"' not in h:
+    a = '  <div class="veil" id="lanternVeil" hidden>'
+    must(h, a)
+    h = h.replace(a, '  <div class="veil" id="pairVeil" hidden>\n    <div class="sheet px">\n      <h2>별빛 마당 로그인</h2>\n      <p class="lead" id="pairDoneText"></p>\n      <div class="btns"><button type="button" class="btn primary" data-close>확인</button></div>\n    </div>\n  </div>\n' + a, 1)
 if 'id="cloudVeil"' not in h:
     a = '  <div class="veil" id="lanternVeil" hidden>'
     must(h, a)
