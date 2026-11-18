@@ -79,7 +79,7 @@ function renderCloud(){
   $("cloudOff").hidden = on; $("cloudOn").hidden = !on;
   if (on) $("cloudStatus").textContent = `${cloud.email || "내 이메일"}로 저장하고 있어요.` + (cloudErr ? " " + cloudErr : cloudLast ? ` 마지막 저장 ${fmtWhen(cloudLast)}` : "");
 }
-$("settingsBtn").addEventListener("click", () => { renderCloud(); const w = pendingPair(); $("cloudCodeRow").hidden = true; $("cloudWait").hidden = !w; });
+$("settingsBtn").addEventListener("click", () => { renderCloud(); const w = pendingPair(); $("cloudCodeRow").hidden = !w; $("cloudWait").hidden = !w; });
 var cloudEmail = "";
 $("cloudSend").addEventListener("click", async () => {
   const em = $("cloudEmail").value.trim();
@@ -90,8 +90,8 @@ $("cloudSend").addEventListener("click", async () => {
     const back = location.origin + location.pathname + "?pair=" + pair;
     await sbFetch("/auth/v1/otp?redirect_to=" + encodeURIComponent(back), {method: "POST", headers: authHeaders(), body: JSON.stringify({email: em, create_user: true})});
     cloudEmail = em; try { localStorage.setItem(PKEY, JSON.stringify({id: pair, at: Date.now()})); } catch (e) {}
-    $("cloudWait").hidden = false;
-    toast("메일을 보냈어요. 메일 속 링크를 눌러 주세요"); waitPair();
+    $("cloudWait").hidden = false; $("cloudCodeRow").hidden = false; $("cloudCode").value = ""; setTimeout(() => $("cloudCode").focus(), 60);
+    toast("메일을 보냈어요"); waitPair();
   }
   catch (e) { toast(e.status === 429 ? "메일을 너무 자주 보냈어요. 잠시 뒤에 다시 해 주세요" : "메일을 보내지 못했어요. 잠시 뒤에 다시 해 주세요"); }
   b.disabled = false;
@@ -103,7 +103,7 @@ $("cloudVerify").addEventListener("click", async () => {
   try {
     const s = await sbFetch("/auth/v1/verify", {method: "POST", headers: authHeaders(), body: JSON.stringify({type: "email", email: cloudEmail, token: code})});
     cloud = {access_token: s.access_token, refresh_token: s.refresh_token, expires_at: s.expires_at || (Date.now()/1000 + (s.expires_in || 3600)), email: s.user && s.user.email, uid: s.user && s.user.id};
-    cloudStore(); $("cloudCodeRow").hidden = true; renderCloud(); await cloudReconcile(true);
+    cloudStore(); try { localStorage.removeItem(PKEY); } catch (e) {} clearInterval(pairTimer); $("cloudWait").hidden = true; $("cloudCodeRow").hidden = true; renderCloud(); await cloudReconcile(true);
   } catch (e) { toast("숫자가 맞지 않거나 시간이 지났어요. 다시 받아 주세요"); }
   b.disabled = false;
 });
@@ -113,7 +113,7 @@ if (cloud && !window.__syVisit && !VISIT) { setTimeout(() => cloudReconcile(fals
 document.addEventListener("visibilitychange", () => { if (!document.hidden && cloud && cloudReady && !VISIT) { if (cloudDirty) cloudFlush(); } });
 window.addEventListener("pagehide", () => { if (cloudDirty) cloudFlush(); });
 $("setupCloud").hidden = !!G.set;
-$("setupCloud").addEventListener("click", () => { renderCloud(); const w = pendingPair(); $("cloudCodeRow").hidden = true; $("cloudWait").hidden = !w; openVeil("settingsVeil"); setTimeout(() => { const s = document.querySelector(".cloud"); if (s) s.scrollIntoView({block: "center"}); $("cloudEmail").focus(); }, 80); });
+$("setupCloud").addEventListener("click", () => { renderCloud(); const w = pendingPair(); $("cloudCodeRow").hidden = !w; $("cloudWait").hidden = !w; openVeil("settingsVeil"); setTimeout(() => { const s = document.querySelector(".cloud"); if (s) s.scrollIntoView({block: "center"}); $("cloudEmail").focus(); }, 80); });
 
 /* login link: Supabase sends a link (templates can't be edited on the free mail). The link opens in Safari with the session in the
  * address; Safari hands it to the app that asked through a one-time pairing id, and the app picks it up by itself. */

@@ -14,7 +14,7 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="icon" type="image/png" href="assets/asset-01.png?v=rainbow">
 <link rel="apple-touch-icon" href="assets/asset-02.png?v=rainbow">
-<link rel="stylesheet" href="./app.css?v=20261118-6">
+<link rel="stylesheet" href="./app.css?v=20261118-7">
 </head>
 <body>
 
@@ -248,7 +248,7 @@
         <h3 id="cloudTitle">서버에 저장</h3>
         <div id="cloudOff">
           <p class="small">이메일로 로그인하면 마당이 바뀔 때마다 서버에 자동으로 저장돼요. 휴대폰을 바꾸거나 앱을 다시 깔아도 같은 이메일로 로그인하면 그대로 돌아와요. 내 마당은 나만 볼 수 있어요.</p>
-          <div class="cloud-row"><input type="email" id="cloudEmail" placeholder="이메일 주소" autocomplete="email" inputmode="email"><button type="button" class="btn primary" id="cloudSend">메일 받기</button></div>\n          <p class="small cloud-wait" id="cloudWait" hidden>메일함에서 <b>Sign in</b> 링크를 눌러 주세요. 사파리에서 열려도 괜찮아요. 이 앱이 알아서 로그인을 이어받아요.</p>
+          <div class="cloud-row"><input type="email" id="cloudEmail" placeholder="이메일 주소" autocomplete="email" inputmode="email"><button type="button" class="btn primary" id="cloudSend">메일 받기</button></div>\n          <p class="small cloud-wait" id="cloudWait" hidden>메일로 온 숫자 6개를 아래에 넣어 주세요. 메일에 숫자 없이 Sign in 링크만 있으면 링크를 눌러도 돼요. 이 앱이 알아서 이어받아요.</p>
           <div class="cloud-row" id="cloudCodeRow" hidden><input type="text" id="cloudCode" placeholder="메일로 온 숫자 6개" inputmode="numeric" autocomplete="one-time-code" maxlength="6"><button type="button" class="btn primary" id="cloudVerify">확인</button></div>
         </div>
         <div id="cloudOn" hidden>
@@ -366,6 +366,6 @@
 (function(){var t0=Date.now();window.addEventListener("error",function(){if(Date.now()-t0>8000)return;try{var g=JSON.parse(localStorage.getItem("starlight-yard-v1")||"null");if(g&&g.set&&g.family&&g.family.length){var v=document.getElementById("setupVeil");if(v)v.hidden=true;var d=document.getElementById("dock");if(d)d.hidden=false;}}catch(e){}});})();</script>
 <div id="visitCover"><p id="visitCoverText">친구 마당으로 가는 중…</p><div class="btns" style="justify-content:center"><button type="button" class="btn" id="visitCoverHome" hidden>내 마당으로</button></div></div>
 <script>if(/[?&]visit=/.test(location.search))document.documentElement.classList.add("visiting");</script>
-<script src="./app.js?v=20261118-6"></script>
+<script src="./app.js?v=20261118-7"></script>
 </body>
 </html>
