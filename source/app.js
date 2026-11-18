@@ -1467,7 +1467,7 @@ function yardTitle(){
 function legacyRenderHud(){
   $("yardName").textContent = yardTitle();
   const one = G.family.length === 1 ? G.family[0] : null;
-  $("yardSub").textContent = one && one.motto ? one.motto : (one ? `${breedOf(one.species, one.breed).name} · 꽃 ${G.blooms||0}송이` : `${G.family.length}마리 · 꽃 ${G.blooms||0}송이`);
+  $("yardSub").textContent = one && one.motto ? one.motto : (one ? `${breedOf(one.species, one.breed).name} · 꽃 ${G.blooms||0}송이 · 온기 ${G.warmth||0}` : `${G.family.length}마리 · 꽃 ${G.blooms||0}송이 · 온기 ${G.warmth||0}`);
   $("warmNum").textContent = G.warmth;
   const next = UNLOCKS.find(u => G.warmth < u.at), prev = [...UNLOCKS].reverse().find(u => G.warmth >= u.at);
   if (next) { const base = prev ? prev.at : 0; $("warmBar").style.width = Math.round((G.warmth-base)/(next.at-base)*100) + "%"; $("warmNext").textContent = `다음: ${next.name} (${next.at})`; }
@@ -2846,6 +2846,7 @@ function enableScreenCheck(){
 }
 if (/debug/.test(location.hash + location.search)) enableScreenCheck();
 { let taps = 0, tt = null; const t = document.querySelector(".title"); if (t) t.addEventListener("click", () => { taps++; clearTimeout(tt); tt = setTimeout(() => taps = 0, 1200); if (taps >= 5) { taps = 0; enableScreenCheck(); } }); }
+
 
 
 

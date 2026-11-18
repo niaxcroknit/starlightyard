@@ -111,6 +111,7 @@ reps = [
  ('  for (const st of G.stars) {\n    if (rising && rising.star === st) continue;', '  for (const st of (lanternMode ? [] : G.stars)) {\n    if (rising && rising.star === st) continue;'),
  (' for(const st of G.stars){if(rising&&rising.star===st)continue;', ' for(const st of (lanternMode?[]:G.stars)){if(rising&&rising.star===st)continue;'),
  ('  for (const st of G.stars) { if (Math.hypot(st.x*LW*P - x, st.y*LH*P - y)', '  for (const st of (lanternMode ? [] : G.stars)) { if (Math.hypot(st.x*LW*P - x, st.y*LH*P - y)'),
+ ('  $("yardSub").textContent = one && one.motto ? one.motto : (one ? `${breedOf(one.species, one.breed).name} · 꽃 ${G.blooms||0}송이` : `${G.family.length}마리 · 꽃 ${G.blooms||0}송이`);', '  $("yardSub").textContent = one && one.motto ? one.motto : (one ? `${breedOf(one.species, one.breed).name} · 꽃 ${G.blooms||0}송이 · 온기 ${G.warmth||0}` : `${G.family.length}마리 · 꽃 ${G.blooms||0}송이 · 온기 ${G.warmth||0}`);'),
  ('function spawnGlow(){ glows.push(', 'function spawnGlow(){ if (lanternMode) return; glows.push('),
  ('function drawBubble(){\n', 'function drawBubble(){\n if(lanternMode)return;\n'),
  ('  drawBgLine(dt);\n', '  if (!lanternMode) drawBgLine(dt);\n'),
