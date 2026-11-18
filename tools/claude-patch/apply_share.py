@@ -39,7 +39,7 @@ if 'id="visitBar"' not in h:
   <div class="veil" id="lanternVeil" hidden>
     <form class="sheet px" id="lanternForm" autocomplete="off">
       <h2>풍등 띄우기</h2>
-      <p class="lead">풍등에 남길 이름을 적어 주세요. 풍등을 누르면 마당 주인과 놀러 온 사람들이 이름을 볼 수 있어요. 풍등은 하루에 하나씩 띄울 수 있어요.</p>
+      <p class="lead">풍등에 남길 이름을 적어 주세요. 이름은 마당 주인만 볼 수 있어요. 풍등은 하루에 하나씩 띄울 수 있어요.</p>
       <label class="field"><span>이름</span><input type="text" id="lanternName" maxlength="12" placeholder="예: 수진"></label>
       <div class="btns"><button type="button" class="btn" data-close>닫기</button><button type="submit" class="btn primary">띄우기</button></div>
     </form>
@@ -51,6 +51,7 @@ if 'id="visitCover"' not in h:
     h = h.replace(a, '''<div id="visitCover"><p id="visitCoverText">친구 마당으로 가는 중…</p><div class="btns" style="justify-content:center"><button type="button" class="btn" id="visitCoverHome" hidden>내 마당으로</button></div></div>
 <script>if(/[?&]visit=/.test(location.search))document.documentElement.classList.add("visiting");</script>
 ''' + a, 1)
+h = h.replace('마당 주인과 놀러 온 사람들이 이름을 볼 수 있어요. 풍등은 하루에 하나씩 띄울 수 있어요.', '이름은 마당 주인만 볼 수 있어요. 풍등은 하루에 하나씩 띄울 수 있어요.')
 h = h.replace('이름을 볼 수 있어요.</p>\n      <label class="field"><span>이름</span><input type="text" id="lanternName"', '이름을 볼 수 있어요. 풍등은 하루에 하나씩 띄울 수 있어요.</p>\n      <label class="field"><span>이름</span><input type="text" id="lanternName"')
 if 'id="lanternBtn"' not in h:
     a = '      <button class="iconbtn px" id="soundBtn"'

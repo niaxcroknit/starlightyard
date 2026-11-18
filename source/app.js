@@ -2850,6 +2850,7 @@ if (/debug/.test(location.hash + location.search)) enableScreenCheck();
 
 
 
+
 /* ===== yard sharing + sky lanterns (Claude) =====
  * Owner makes a share code; anyone with the code sees the yard read-only and can only launch sky lanterns.
  * Visitors never touch their own saved yard: save() is a no-op while visiting (window.__syVisit). */
@@ -2926,7 +2927,7 @@ function showLanternTag(l, cx, cy){
   const tag = $("lanternTag"); tagFor = l;
   const d = new Date(l.at || Date.now()), when = `${d.getMonth()+1}월 ${d.getDate()}일`;
   const mine = !VISIT && l.by_owner;
-  $("lanternTagText").textContent = (mine ? "내가 띄운 풍등" : `${l.name} 님의 풍등${l.by_owner ? " · 마당 주인" : ""}`) + " · " + when;
+  $("lanternTagText").textContent = (mine ? "내가 띄운 풍등" : (l.name ? `${l.name} 님의 풍등${l.by_owner ? " · 마당 주인" : ""}` : "누군가 띄운 풍등")) + " · " + when;
   $("lanternDel").hidden = !!VISIT;
   tag.hidden = false;
   const r = tag.getBoundingClientRect();
@@ -2950,7 +2951,7 @@ $("lanternDel").addEventListener("click", async () => {
     const inUi = ev.target.closest && ev.target.closest(".visit-bar,.veil,.lantern-tag,#visitCover,.toast");
     if (inUi) return;
     const r = cv.getBoundingClientRect(), x = (ev.clientX - r.left)/camZ, y = (ev.clientY - r.top)/camZ;
-    for (let i = lanternHits.length - 1; i >= 0; i--) { const h = lanternHits[i]; if (Math.hypot(h.x - x, h.y - y) < h.r) { ev.stopPropagation(); showLanternTag(h.l, ev.clientX, ev.clientY); return; } }
+    if (!VISIT) for (let i = lanternHits.length - 1; i >= 0; i--) { const h = lanternHits[i]; if (Math.hypot(h.x - x, h.y - y) < h.r) { ev.stopPropagation(); showLanternTag(h.l, ev.clientX, ev.clientY); return; } }
     ev.stopPropagation(); if (ev.target === cv) ev.preventDefault();
   }, true);
 })();
@@ -2965,7 +2966,7 @@ $("lanternForm").addEventListener("submit", async (ev) => {
   try { localStorage.setItem(VKEY, name); } catch (e) {}
   closeVeil("lanternVeil");
   if (VISIT) {
-    try { const l = await syRpc("sy_add_lantern", {p_code: VISIT, p_name: name, p_device: deviceId}); l.born = performance.now(); lanterns.unshift(l); markLaunched(); toast("풍등이 하늘로 올라가요"); }
+    try { const r0 = await syRpc("sy_add_lantern", {p_code: VISIT, p_name: name, p_device: deviceId}), l = {id: r0.id, at: r0.at}; l.born = performance.now(); lanterns.unshift(l); markLaunched(); toast("풍등이 하늘로 올라가요"); }
     catch (e) { if (/one_per_day/.test(e.message)) markLaunched(); toast(syErr(e)); }
   } else if (G.share) {
     try { const l = await syRpc("sy_add_lantern", {p_code: G.share.code, p_name: name, p_device: deviceId, p_secret: G.share.secret}); l.born = performance.now(); lanterns.unshift(l); markLaunched(); toast("풍등이 하늘로 올라가요"); }
@@ -3027,7 +3028,7 @@ async function pushShare(){
 async function pullLanterns(){
   const code = VISIT || (G.share && G.share.code); if (!code) return null;
   try {
-    const y = await syRpc("sy_get_yard", {p_code: code}); if (!y) return null;
+    const y = await syRpc("sy_get_yard", VISIT ? {p_code: code} : {p_code: code, p_secret: G.share.secret}); if (!y) return null;
     const born = new Map(lanterns.filter(l => l.born).map(l => [l.id, l.born]));
     lanterns = (y.lanterns || []).map(l => Object.assign(l, born.has(l.id) ? {born: born.get(l.id)} : {}));
     return y;
