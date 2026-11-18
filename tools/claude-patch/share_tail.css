@@ -1,0 +1,21 @@
+
+/* ===== yard sharing + sky lanterns ===== */
+.share .share-check{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink)}
+.share .share-check input{width:18px;height:18px;accent-color:#e9a7ba}
+.share .share-code{margin:2px 0;font-size:28px;font-weight:800;letter-spacing:.18em;color:#645163;text-align:center;font-variant-numeric:tabular-nums}
+.share h3.sub{margin-top:6px}
+.share-visit{display:flex;gap:8px;min-width:0}
+.share-visit input{flex:1 1 auto;min-width:0;text-transform:uppercase;letter-spacing:.12em}
+.share-visit input::placeholder{letter-spacing:0;text-transform:none}
+.share-visit .btn{flex:none}
+.visit-bar{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(18px + env(safe-area-inset-bottom,0px) + var(--lift,0px));z-index:12;display:flex;align-items:center;gap:8px;width:min(500px,calc(100% - 24px));box-sizing:border-box;padding:8px 8px 8px 16px;border-radius:24px;background:rgba(255,251,246,.93)!important;border:1px solid rgba(255,255,255,.9)!important;box-shadow:0 10px 30px rgba(86,62,85,.16)!important;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+.visit-bar span{flex:1 1 auto;min-width:0;font-size:13px;color:#645163;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.visit-bar .btn{flex:none;padding:10px 13px;font-size:13px}
+.lantern-tag{position:fixed;z-index:40;display:flex;align-items:center;gap:8px;max-width:calc(100% - 20px);box-sizing:border-box;padding:8px 8px 8px 14px;border-radius:18px;background:rgba(255,251,246,.95)!important;border:1px solid rgba(255,255,255,.9)!important;box-shadow:0 8px 24px rgba(86,62,85,.18)!important;font-size:13px;color:#645163}
+.lantern-tag span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.lantern-tag .btn{flex:none;padding:6px 10px;font-size:12px}
+#visitCover{display:none;position:fixed;inset:0;z-index:60;place-items:center;align-content:center;gap:14px;background:linear-gradient(#cfc4e6,#efe3ee 60%,#dfe9d4);transition:opacity .5s}
+html.visiting #visitCover{display:grid}
+#visitCover.done{opacity:0;pointer-events:none}
+#visitCover p{margin:0;font-size:15px;color:#645163;text-align:center;padding:0 24px;word-break:keep-all}
+html.visiting #dock,html.visiting #settingsBtn{display:none!important}

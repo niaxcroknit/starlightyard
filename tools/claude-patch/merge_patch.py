@@ -131,3 +131,7 @@ if marker in c:
 c = c.rstrip() + '\n\n' + marker + '\n' + open(os.path.join(os.path.dirname(__file__), 'claude_tail.css')).read()
 open(P('app.css'), 'w').write(c)
 print("patched", src, ver)
+
+# ---------- sharing + lanterns ----------
+import subprocess
+subprocess.check_call([sys.executable, os.path.join(os.path.dirname(os.path.abspath(__file__)), "apply_share.py"), src])

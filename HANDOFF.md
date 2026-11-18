@@ -89,3 +89,10 @@ claude.ai 아티팩트 환경에서만 `window.claude.use("db")`로 계정 비�
 
 ## 7. 검증 방법 (Claude가 쓴 방식)
 Playwright(크로미움)로 `source/`를 HTTP로 띄우고 localStorage에 샘플 상태를 넣어 화면을 열고, 창마다 `getBoundingClientRect`로 상자 밖으로 나간 요소를 찾고, 모션은 프레임별 캡처로 확인. 내부 상태가 필요하면 **테스트용 복사본**의 `app.js` 끝에 `window.__ball` 같은 노출 코드를 잠깐 넣어서 확인(저장소에는 넣지 않음).
+
+## 마당 공유 · 풍등 (2026-11-18 추가, 사용자 요청으로 '공유 금지' 원칙을 바꿈)
+- 설정 → 마당 공유: 주인이 6자리 공유 코드를 만들고, 코드/링크(`?visit=코드`)를 받은 사람은 **구경 + 풍등 띄우기만** 가능. 수정은 주인만.
+- 서버: Supabase 프로젝트 `ppojjak`의 `sy_yards`, `sy_lanterns` 표(다른 표와 분리). 표는 직접 못 읽고 `sy_*` 함수로만 접근. 주인 비밀값은 `G.share.secret`에만 있고 서버엔 해시만.
+- 공유되는 것: 마당 이름·하늘·온기·장식/위치·아이 이름/종/한마디, 사진은 '아이 사진도 보여주기'를 켤 때만. **별 편지·날짜·기분 기록은 보내지 않음.**
+- 놀러 간 동안 `window.__syVisit`로 save()를 막아 방문자 자기 마당 데이터는 절대 바뀌지 않음.
+- 코드 위치: `tools/claude-patch/apply_share.py`, `share_tail.js`, `share_tail.css` (merge_patch.py가 마지막에 자동 실행).
