@@ -1,0 +1,8 @@
+/* ===== cloud save ===== */
+.cloud .cloud-row{display:flex;gap:8px;min-width:0}
+.cloud .cloud-row input{flex:1 1 auto;min-width:0}
+.cloud .cloud-row .btn{flex:none}
+#cloudCode{letter-spacing:.3em;font-variant-numeric:tabular-nums}
+#cloudCode::placeholder{letter-spacing:0}
+.cloud-pick{display:flex;flex-direction:column;gap:10px}
+.cloud-pick .btn{white-space:normal;text-align:left;line-height:1.5;padding:12px 14px}

@@ -96,3 +96,9 @@ Playwright(크로미움)로 `source/`를 HTTP로 띄우고 localStorage에 샘�
 - 공유되는 것: 마당 이름·하늘·온기·장식/위치·아이 이름/종/한마디, 사진은 '아이 사진도 보여주기'를 켤 때만. **별 편지·날짜·기분 기록은 보내지 않음.**
 - 놀러 간 동안 `window.__syVisit`로 save()를 막아 방문자 자기 마당 데이터는 절대 바뀌지 않음.
 - 코드 위치: `tools/claude-patch/apply_share.py`, `share_tail.js`, `share_tail.css` (merge_patch.py가 마지막에 자동 실행).
+
+## 서버 저장 (이메일 로그인, 2026-11-18)
+- 설정 → 서버에 저장: 이메일로 받은 숫자 6개로 로그인(Supabase Auth, ppojjak 프로젝트). 마당이 바뀌면 2.5초 뒤 `sy_saves`(본인만 읽고 쓰는 RLS)에 통째로 저장.
+- 처음 로그인하는 폰에 다른 마당이 있으면 **절대 자동으로 덮지 않고** 고르게 함(고를 때까지 매번 다시 물음). 한 번 맞춘 뒤로는 더 최근에 바뀐 쪽을 따라감.
+- 새로 설치한 폰은 첫 화면의 '전에 쓰던 마당이 있어요 · 이메일로 불러오기'로 복원.
+- 코드: `tools/claude-patch/cloud_tail.js`, `cloud_tail.css` (apply_share.py가 함께 붙임). 시작 중 save()가 먼저 불리므로 상태 변수는 `var`로 둘 것.

@@ -62,11 +62,43 @@ if 'id="lanternBar"' not in h:
     must(h, a)
     h = h.replace(a, '  <div class="visit-bar px" id="lanternBar" hidden><span id="lanternCount">풍등</span><button type="button" class="btn primary" id="lanternLaunch">풍등 띄우기</button><button type="button" class="btn" id="lanternExit">나가기</button></div>\n' + a, 1)
 h = h.replace('id="lanternMine">나도 풍등 띄우기</button>', 'id="lanternMine">풍등 보러 가기</button>')
+if 'id="cloudTitle"' not in h:
+    a = '      <section class="backup" aria-labelledby="backupTitle">'
+    must(h, a)
+    h = h.replace(a, '''      <section class="backup cloud" aria-labelledby="cloudTitle">
+        <h3 id="cloudTitle">서버에 저장</h3>
+        <div id="cloudOff">
+          <p class="small">이메일로 로그인하면 마당이 바뀔 때마다 서버에 자동으로 저장돼요. 휴대폰을 바꾸거나 앱을 다시 깔아도 같은 이메일로 로그인하면 그대로 돌아와요. 내 마당은 나만 볼 수 있어요.</p>
+          <div class="cloud-row"><input type="email" id="cloudEmail" placeholder="이메일 주소" autocomplete="email" inputmode="email"><button type="button" class="btn primary" id="cloudSend">숫자 받기</button></div>
+          <div class="cloud-row" id="cloudCodeRow" hidden><input type="text" id="cloudCode" placeholder="메일로 온 숫자 6개" inputmode="numeric" autocomplete="one-time-code" maxlength="6"><button type="button" class="btn primary" id="cloudVerify">확인</button></div>
+        </div>
+        <div id="cloudOn" hidden>
+          <p class="small" id="cloudStatus"></p>
+          <div class="btns"><button type="button" class="btn" id="cloudOut">로그아웃</button></div>
+        </div>
+      </section>
+''' + a, 1)
+if 'id="setupCloud"' not in h:
+    i = h.index('<p class="lead" id="setupLead">'); j = h.index('</p>', i) + 4
+    h = h[:j] + '\n      <button type="button" class="btn" id="setupCloud">전에 쓰던 마당이 있어요 · 이메일로 불러오기</button>' + h[j:]
+if 'id="cloudVeil"' not in h:
+    a = '  <div class="veil" id="lanternVeil" hidden>'
+    must(h, a)
+    h = h.replace(a, '''  <div class="veil" id="cloudVeil" hidden>
+    <div class="sheet px">
+      <h2>어느 마당을 쓸까요?</h2>
+      <p class="lead">이 폰과 서버에 서로 다른 마당이 있어요. 고른 마당으로 맞추고, 앞으로는 자동으로 저장돼요. 고르기 전에 설정에서 백업 파일을 저장해 두면 더 안심이에요.</p>
+      <div class="cloud-pick" id="cloudPick"><button type="button" class="btn" id="cloudPickPhone"></button><button type="button" class="btn" id="cloudPickServer"></button></div>
+      <div class="btns"><button type="button" class="btn" data-close>나중에 고를게요</button></div>
+    </div>
+  </div>
+''' + a, 1)
 open(P('index.html'), 'w').write(h)
 
 s = open(P('app.js')).read()
 reps = [
  ('function save(){\n  G.updatedAt = Date.now();', 'function save(){\n  if (window.__syVisit) return;\n  G.updatedAt = Date.now();'),
+ ('  try { localStorage.setItem(LS_KEY, JSON.stringify(G)); } catch(e) {}\n  clearTimeout(saveTimer);', '  try { localStorage.setItem(LS_KEY, JSON.stringify(G)); } catch(e) {}\n  if (typeof cloudQueue === "function") cloudQueue();\n  clearTimeout(saveTimer);'),
  ('function flush(){\n  if (!docRef) return;', 'function flush(){\n  if (!docRef || window.__syVisit) return;'),
  ('      if (r && (r.family || r.pet) && (r.updatedAt||0) > (G.updatedAt||0)) {', '      if (!window.__syVisit && r && (r.family || r.pet) && (r.updatedAt||0) > (G.updatedAt||0)) {'),
  ('  drawClayBackground(h,t);\n', '  drawClayBackground(h,t);\n  drawSkyLanterns(t);\n'),
@@ -84,12 +116,12 @@ for a, b in reps:
 mk_js = '\n/* ===== yard sharing + sky lanterns (Claude) ====='
 s = s.rstrip(); assert s.endswith('})();')
 if mk_js in s: s = s[:s.index(mk_js)] + '\n})();'
-s = s[:-5] + open(os.path.join(here, 'share_tail.js')).read() + '\n})();\n'
+s = s[:-5] + open(os.path.join(here, 'share_tail.js')).read() + open(os.path.join(here, 'cloud_tail.js')).read() + '\n})();\n'
 open(P('app.js'), 'w').write(s)
 
 c = open(P('app.css')).read()
 mk = '/* ===== yard sharing + sky lanterns ===== */'
 if mk in c: c = c[:c.index(mk)].rstrip() + '\n'
-c = c.rstrip() + '\n' + open(os.path.join(here, 'share_tail.css')).read()
+c = c.rstrip() + '\n' + open(os.path.join(here, 'share_tail.css')).read() + open(os.path.join(here, 'cloud_tail.css')).read()
 open(P('app.css'), 'w').write(c)
 print('share applied')

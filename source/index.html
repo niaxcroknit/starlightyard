@@ -14,7 +14,7 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="icon" type="image/png" href="assets/asset-01.png?v=rainbow">
 <link rel="apple-touch-icon" href="assets/asset-02.png?v=rainbow">
-<link rel="stylesheet" href="./app.css?v=20261118-4">
+<link rel="stylesheet" href="./app.css?v=20261118-5">
 </head>
 <body>
 
@@ -49,6 +49,14 @@
   <div class="visit-bar px" id="lanternBar" hidden><span id="lanternCount">풍등</span><button type="button" class="btn primary" id="lanternLaunch">풍등 띄우기</button><button type="button" class="btn" id="lanternExit">나가기</button></div>
   <div class="visit-bar px" id="visitBar" hidden><span id="visitWho">친구 마당에 놀러 왔어요</span><button type="button" class="btn primary" id="visitLantern">풍등 띄우기</button><button type="button" class="btn" id="visitHome">내 마당으로</button></div>
   <div class="lantern-tag px" id="lanternTag" hidden><span id="lanternTagText"></span><button type="button" class="btn" id="lanternDel" hidden>내리기</button></div>
+  <div class="veil" id="cloudVeil" hidden>
+    <div class="sheet px">
+      <h2>어느 마당을 쓸까요?</h2>
+      <p class="lead">이 폰과 서버에 서로 다른 마당이 있어요. 고른 마당으로 맞추고, 앞으로는 자동으로 저장돼요. 고르기 전에 설정에서 백업 파일을 저장해 두면 더 안심이에요.</p>
+      <div class="cloud-pick" id="cloudPick"><button type="button" class="btn" id="cloudPickPhone"></button><button type="button" class="btn" id="cloudPickServer"></button></div>
+      <div class="btns"><button type="button" class="btn" data-close>나중에 고를게요</button></div>
+    </div>
+  </div>
   <div class="veil" id="lanternVeil" hidden>
     <form class="sheet px" id="lanternForm" autocomplete="off">
       <h2>풍등 띄우기</h2>
@@ -82,6 +90,7 @@
     <form class="sheet px" id="setupForm" autocomplete="off">
       <h2 id="setupTitle">함께할 아이를 소개해 주세요</h2>
       <p class="lead" id="setupLead">별빛 마당은 떠나보낸 아이와 천천히 시간을 보내는 작은 공간이에요. 여러 아이와 함께였다면 모두 데려올 수 있어요.</p>
+      <button type="button" class="btn" id="setupCloud">전에 쓰던 마당이 있어요 · 이메일로 불러오기</button>
       <div class="fam">
         <span class="label">우리 아이들 (최대 10마리)</span>
         <div class="chips" id="famChips"></div>
@@ -228,6 +237,18 @@
       </label>
       <div class="btns"><button type="button" class="btn" id="editPet">아이들 정보 바꾸기 · 추가하기</button></div>
       <div class="btns"><button type="button" class="btn" id="guideBtn">사용 방법 다시 보기</button></div>
+      <section class="backup cloud" aria-labelledby="cloudTitle">
+        <h3 id="cloudTitle">서버에 저장</h3>
+        <div id="cloudOff">
+          <p class="small">이메일로 로그인하면 마당이 바뀔 때마다 서버에 자동으로 저장돼요. 휴대폰을 바꾸거나 앱을 다시 깔아도 같은 이메일로 로그인하면 그대로 돌아와요. 내 마당은 나만 볼 수 있어요.</p>
+          <div class="cloud-row"><input type="email" id="cloudEmail" placeholder="이메일 주소" autocomplete="email" inputmode="email"><button type="button" class="btn primary" id="cloudSend">숫자 받기</button></div>
+          <div class="cloud-row" id="cloudCodeRow" hidden><input type="text" id="cloudCode" placeholder="메일로 온 숫자 6개" inputmode="numeric" autocomplete="one-time-code" maxlength="6"><button type="button" class="btn primary" id="cloudVerify">확인</button></div>
+        </div>
+        <div id="cloudOn" hidden>
+          <p class="small" id="cloudStatus"></p>
+          <div class="btns"><button type="button" class="btn" id="cloudOut">로그아웃</button></div>
+        </div>
+      </section>
       <section class="backup" aria-labelledby="backupTitle">
         <h3 id="backupTitle">백업 · 옮기기</h3>
         <p class="small">아이 정보·사진·별 편지·꾸민 마당을 파일 하나로 저장해요. 휴대폰을 바꾸거나 다른 브라우저로 옮길 때 그 파일을 불러오면 그대로 이어져요. 파일은 나만 보관해요.</p>
@@ -338,6 +359,6 @@
 (function(){var t0=Date.now();window.addEventListener("error",function(){if(Date.now()-t0>8000)return;try{var g=JSON.parse(localStorage.getItem("starlight-yard-v1")||"null");if(g&&g.set&&g.family&&g.family.length){var v=document.getElementById("setupVeil");if(v)v.hidden=true;var d=document.getElementById("dock");if(d)d.hidden=false;}}catch(e){}});})();</script>
 <div id="visitCover"><p id="visitCoverText">친구 마당으로 가는 중…</p><div class="btns" style="justify-content:center"><button type="button" class="btn" id="visitCoverHome" hidden>내 마당으로</button></div></div>
 <script>if(/[?&]visit=/.test(location.search))document.documentElement.classList.add("visiting");</script>
-<script src="./app.js?v=20261118-4"></script>
+<script src="./app.js?v=20261118-5"></script>
 </body>
 </html>
