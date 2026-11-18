@@ -373,7 +373,26 @@ html.visiting #visitCover{display:grid}
 #visitCover p{margin:0;font-size:15px;color:#645163;text-align:center;padding:0 24px;word-break:keep-all}
 html.visiting #dock,html.visiting #settingsBtn{display:none!important}
 html.lantern-mode .top,html.lantern-mode #dock,html.lantern-mode #hint{display:none!important}
-#lanternBtn svg{width:22px;height:22px}
+/* the way into lantern view: one glowing lantern in the sky under the top bar */
+.lantern-sky{position:absolute;right:calc(16px + env(safe-area-inset-right,0px));top:calc(84px + env(safe-area-inset-top,0px));z-index:4;background:none;border:0;padding:4px;display:flex;flex-direction:column;align-items:center;gap:6px;font:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.lantern-sky img{width:44px;height:57px;filter:drop-shadow(0 0 14px rgba(255,190,110,.95)) drop-shadow(0 0 30px rgba(255,200,130,.6));animation:skyLanternBob 4.5s ease-in-out infinite}
+.lantern-sky span{font-size:12px;font-weight:700;color:#645163;background:rgba(255,251,246,.9);padding:5px 10px;border-radius:12px;box-shadow:0 4px 12px rgba(86,62,85,.14);white-space:nowrap}
+.lantern-sky:active img{transform:scale(.94)}
+@keyframes skyLanternBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+@media (prefers-reduced-motion:reduce){.lantern-sky img{animation:none}}
+@media (max-height:520px){.lantern-sky{top:calc(64px + env(safe-area-inset-top,0px))}.lantern-sky img{width:34px;height:44px}}
+html.lantern-mode .lantern-sky,html.visiting .lantern-sky{display:none!important}
+/* warmth now lives in the line under the yard name */
+.top .warmth{display:none!important}
+/* bigger, easier-to-tap top buttons (music, settings) */
+.top .iconbtn{width:52px!important;height:52px!important;border-radius:26px}
+.top .iconbtn svg{width:26px!important;height:26px!important;shape-rendering:auto}
+.top .right{gap:10px}
+@media (max-height:520px){.top .iconbtn{width:44px!important;height:44px!important;border-radius:22px}.top .iconbtn svg{width:22px!important;height:22px!important}}
+.lantern-sky{top:calc(92px + env(safe-area-inset-top,0px))}
+@media (max-height:520px){.lantern-sky{top:calc(62px + env(safe-area-inset-top,0px))}}
+/* warmth moved into the line under the yard name, so keep that line visible on short (landscape) screens too */
+@media (max-height:520px){.top .title p{display:block!important;margin-top:2px;font-size:10px;max-width:none!important;overflow:visible;text-overflow:clip}}
 /* ===== cloud save ===== */
 .cloud .cloud-row{display:flex;gap:8px;min-width:0}
 .cloud .cloud-row input{flex:1 1 auto;min-width:0}

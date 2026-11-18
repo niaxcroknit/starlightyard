@@ -54,10 +54,12 @@ if 'id="visitCover"' not in h:
 ''' + a, 1)
 h = h.replace('마당 주인과 놀러 온 사람들이 이름을 볼 수 있어요. 풍등은 하루에 하나씩 띄울 수 있어요.', '이름은 마당 주인만 볼 수 있어요. 풍등은 하루에 하나씩 띄울 수 있어요.')
 h = h.replace('이름을 볼 수 있어요.</p>\n      <label class="field"><span>이름</span><input type="text" id="lanternName"', '이름을 볼 수 있어요. 풍등은 하루에 하나씩 띄울 수 있어요.</p>\n      <label class="field"><span>이름</span><input type="text" id="lanternName"')
+import re as _re
+h = _re.sub(r'      <button class="iconbtn px" id="lanternBtn".*?</button>\n', '', h, flags=_re.S)   # old small top button
 if 'id="lanternBtn"' not in h:
-    a = '      <button class="iconbtn px" id="soundBtn"'
+    a = '  <div class="toast px" id="toast"'
     must(h, a)
-    h = h.replace(a, '      <button class="iconbtn px" id="lanternBtn" aria-label="풍등 보기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="M8.2 4.5h7.6c1.6 2 2.4 4.6 2.2 7.6-.2 3-1.2 5.3-2.6 6.9H8.6C7.2 17.4 6.2 15.1 6 12.1c-.2-3 .6-5.6 2.2-7.6z"/><path d="M10.4 4.6c-.8 2.4-.9 9.4.2 14.3M13.6 4.6c.8 2.4.9 9.4-.2 14.3"/><path d="M9.4 21h5.2"/></svg></button>\n' + a, 1)
+    h = h.replace(a, '  <button type="button" class="lantern-sky" id="lanternBtn" aria-label="풍등 보기"><img alt="" id="lanternSkyImg"><span>풍등 보기</span></button>\n' + a, 1)
 if 'id="lanternBar"' not in h:
     a = '  <div class="visit-bar px" id="visitBar" hidden>'
     must(h, a)

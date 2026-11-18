@@ -2861,6 +2861,10 @@ if (/debug/.test(location.hash + location.search)) enableScreenCheck();
 
 
 
+
+
+
+
 /* ===== yard sharing + sky lanterns (Claude) =====
  * Owner makes a share code; anyone with the code sees the yard read-only and can only launch sky lanterns.
  * Visitors never touch their own saved yard: save() is a no-op while visiting (window.__syVisit). */
@@ -2907,6 +2911,7 @@ const lanternArt = (() => {
 })();
 const lanternGlow = (() => { const c = document.createElement("canvas"), n = 128; c.width = c.height = n; const x = c.getContext("2d"); const g = x.createRadialGradient(n/2,n/2,0,n/2,n/2,n/2); g.addColorStop(0,"rgba(255,190,110,.55)"); g.addColorStop(.45,"rgba(255,190,110,.2)"); g.addColorStop(1,"rgba(255,190,110,0)"); x.fillStyle = g; x.fillRect(0,0,n,n); return c; })();
 let lanternHits = [];
+try { $("lanternSkyImg").src = lanternArt.toDataURL(); } catch (e) {}
 function lanternSpot(l){
   let h = 2166136261; for (const ch of String(l.id)) { h ^= ch.charCodeAt(0); h = Math.imul(h, 16777619); }
   const u = (k) => ((h >>> (k*5)) & 1023)/1023;
