@@ -2867,6 +2867,7 @@ if (/debug/.test(location.hash + location.search)) enableScreenCheck();
 
 
 
+
 /* ===== yard sharing + sky lanterns (Claude) =====
  * Owner makes a share code; anyone with the code sees the yard read-only and can only launch sky lanterns.
  * Visitors never touch their own saved yard: save() is a no-op while visiting (window.__syVisit). */
@@ -2928,8 +2929,8 @@ function drawSkyLanterns(t){
   const placed = list.map((l, i) => {
     const q = lanternSpot(l), near = n <= 1 ? 1 : Math.max(0.1, Math.pow(0.87, i));
     const s = base*(0.3 + 0.9*near);
-    const u = (q.u1*0.35 + i*0.618034) % 1, hx = (0.09 + 0.82*u)*W;          // golden-ratio spread so neighbours don't pile up
-    let x = cx + (hx - cx)*(0.6 + 0.4*near) + Math.sin(t*0.23 + q.u4*9)*5*near;
+    const u = (q.u1*0.35 + i*0.618034) % 1, hx = (0.06 + 0.88*u)*W;          // golden-ratio spread so neighbours don't pile up
+    let x = hx + Math.sin(t*0.23 + q.u4*9)*5*near;                          // use the whole width; height alone carries the distance
     const yn = Math.max(0.02, Math.min(0.96, 0.05 + 0.78*near + (q.u2 - 0.5)*(0.12 + 0.3*(1 - near))));
     let y = top + yn*(bot - top) + Math.sin(t*0.6 + q.u1*6)*3*(0.4 + 0.6*near);
     let a = 0.3 + 0.7*near;
