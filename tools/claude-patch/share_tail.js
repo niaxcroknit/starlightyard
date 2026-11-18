@@ -10,11 +10,17 @@ async function syRpc(fn, args){
   if (!r.ok) throw new Error((j && (j.message || j.hint)) || txt || ("http " + r.status));
   return j;
 }
-const syErr = (e) => { const m = String(e && e.message || e); return /slow_down/.test(m) ? "잠시 뒤에 다시 띄워 주세요" : /no_yard|not found/i.test(m) ? "공유가 끝난 마당이에요" : /too_big/.test(m) ? "사진이 너무 커서 공유할 수 없어요. 사진 보여주기를 꺼 주세요" : "연결이 잠깐 불안정해요. 조금 뒤에 다시 해 주세요"; };
+const syErr = (e) => { const m = String(e && e.message || e); return /one_per_day/.test(m) ? "풍등은 하루에 하나만 띄울 수 있어요. 내일 또 띄워 주세요" : /slow_down/.test(m) ? "잠시 뒤에 다시 띄워 주세요" : /no_yard|not found/i.test(m) ? "공유가 끝난 마당이에요" : /too_big/.test(m) ? "사진이 너무 커서 공유할 수 없어요. 사진 보여주기를 꺼 주세요" : "연결이 잠깐 불안정해요. 조금 뒤에 다시 해 주세요"; };
 const VISIT = (() => { const m = /[?&]visit=([A-Za-z0-9]{4,10})/.exec(location.search); return m ? m[1].toUpperCase() : null; })();
 let lanterns = [];          // {id, name, by_owner, at, born?}
 var lanternMode = false;    // lanterns are only shown in this calm view (letters stay in the normal sky)
 const VKEY = "starlight-yard-visitor";
+const DKEY = "starlight-yard-device", LDKEY = "starlight-yard-lantern-day";
+const deviceId = (() => { try { let d = localStorage.getItem(DKEY); if (!d) { d = "d" + Date.now().toString(36) + Math.random().toString(36).slice(2, 12); localStorage.setItem(DKEY, d); } return d; } catch (e) { return "d-" + Math.random().toString(36).slice(2, 14); } })();
+const lanternKey = () => VISIT || (G.share && G.share.code) || "mine";
+const lanternDays = () => { try { return JSON.parse(localStorage.getItem(LDKEY) || "{}"); } catch (e) { return {}; } };
+const launchedToday = () => lanternDays()[lanternKey()] === today();
+const markLaunched = () => { try { const m = lanternDays(); m[lanternKey()] = today(); localStorage.setItem(LDKEY, JSON.stringify(m)); } catch (e) {} };
 const vname = () => { try { return localStorage.getItem(VKEY) || ""; } catch (e) { return ""; } };
 
 function shareSnapshot(){
@@ -100,7 +106,7 @@ $("lanternDel").addEventListener("click", async () => {
 
 /* ---------- launching ---------- */
 let launchAs = null;
-function askLantern(){ $("lanternName").value = vname(); openVeil("lanternVeil"); setTimeout(() => $("lanternName").focus(), 60); }
+function askLantern(){ if (launchedToday()) { toast("오늘은 이미 풍등을 띄웠어요. 내일 또 띄워 주세요"); return; } $("lanternName").value = vname(); openVeil("lanternVeil"); setTimeout(() => $("lanternName").focus(), 60); }
 $("lanternForm").addEventListener("submit", async (ev) => {
   ev.preventDefault();
   const name = $("lanternName").value.trim().slice(0, 12);
@@ -108,15 +114,15 @@ $("lanternForm").addEventListener("submit", async (ev) => {
   try { localStorage.setItem(VKEY, name); } catch (e) {}
   closeVeil("lanternVeil");
   if (VISIT) {
-    try { const l = await syRpc("sy_add_lantern", {p_code: VISIT, p_name: name}); l.born = performance.now(); lanterns.unshift(l); sfx && sfx("chime"); toast("풍등이 하늘로 올라가요"); }
-    catch (e) { toast(syErr(e)); }
+    try { const l = await syRpc("sy_add_lantern", {p_code: VISIT, p_name: name, p_device: deviceId}); l.born = performance.now(); lanterns.unshift(l); markLaunched(); toast("풍등이 하늘로 올라가요"); }
+    catch (e) { if (/one_per_day/.test(e.message)) markLaunched(); toast(syErr(e)); }
   } else if (G.share) {
-    try { const l = await syRpc("sy_add_lantern", {p_code: G.share.code, p_name: name, p_secret: G.share.secret}); l.born = performance.now(); lanterns.unshift(l); toast("풍등이 하늘로 올라가요"); }
-    catch (e) { toast(syErr(e)); }
+    try { const l = await syRpc("sy_add_lantern", {p_code: G.share.code, p_name: name, p_device: deviceId, p_secret: G.share.secret}); l.born = performance.now(); lanterns.unshift(l); markLaunched(); toast("풍등이 하늘로 올라가요"); }
+    catch (e) { if (/one_per_day/.test(e.message)) markLaunched(); toast(syErr(e)); }
   } else {
     const l = {id: uid(), name, by_owner: true, at: new Date().toISOString()};
     G.lanterns = [l].concat(G.lanterns || []).slice(0, 40); save();
-    lanterns.unshift(Object.assign({born: performance.now()}, l)); toast("풍등이 하늘로 올라가요");
+    lanterns.unshift(Object.assign({born: performance.now()}, l)); markLaunched(); toast("풍등이 하늘로 올라가요");
   }
 });
 
@@ -135,7 +141,7 @@ $("shareMake").addEventListener("click", async () => {
   try {
     const r = await syRpc("sy_create_share", {p_snapshot: shareSnapshot()});
     G.share = {code: r.code, secret: r.secret}; save(); syncedStr = "";
-    for (const l of (G.lanterns || []).slice(0, 10).reverse()) { try { await syRpc("sy_add_lantern", {p_code: r.code, p_name: l.name, p_secret: r.secret}); } catch (e) {} }
+    for (const l of (G.lanterns || []).slice(0, 10).reverse()) { try { await syRpc("sy_add_lantern", {p_code: r.code, p_name: l.name, p_device: deviceId + "-" + l.id, p_secret: r.secret}); } catch (e) {} }
     G.lanterns = []; save(); await pullLanterns(); renderShare(); toast("공유 코드를 만들었어요");
   } catch (e) { toast(syErr(e)); }
   b.disabled = false; b.textContent = "공유 코드 만들기";
