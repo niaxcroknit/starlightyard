@@ -2881,6 +2881,7 @@ if (/debug/.test(location.hash + location.search)) enableScreenCheck();
 
 
 
+
 /* ===== yard sharing + sky lanterns (Claude) =====
  * Owner makes a share code; anyone with the code sees the yard read-only and can only launch sky lanterns.
  * Visitors never touch their own saved yard: save() is a no-op while visiting (window.__syVisit). */
@@ -2908,6 +2909,13 @@ function skyTopColor(image){
   } catch (e) { c = [200, 214, 232]; }
   skyTopCols.set(image, c); return c;
 }
+/* clouds cut from the painted skies (assets/sky-clouds.webp), loaded only when lantern view is first opened */
+const SKY_CLOUDS = {"day": [[0, 0, 254, 148], [258, 0, 180, 114], [442, 0, 362, 204]], "dawn": [[808, 0, 174, 110], [986, 0, 240, 146]], "dusk": [[1230, 0, 278, 148], [1512, 0, 376, 204], [0, 208, 168, 92]], "night": [[368, 208, 294, 150], [666, 208, 222, 124], [892, 208, 230, 124]]};
+let skyCloudImg = null;
+function needSkyClouds(){ if (skyCloudImg) return; skyCloudImg = new Image(); skyCloudImg.src = "assets/sky-clouds.webp"; }
+function skyKeyOf(image){ for (const [k, v] of sceneBackgrounds) if (v === image) return k; return "day"; }
+const SKY_LAYOUT = [[0.16, 0.42, 0, 0.62], [0.62, 0.18, 1, 0.5], [0.9, 0.62, 2, 0.42], [0.4, 0.78, 1, 0.34]];   // x, y (in the new strip), which cloud, size
+const SKY_STARS = [[0.08,0.3],[0.27,0.12],[0.35,0.55],[0.5,0.32],[0.71,0.6],[0.83,0.22],[0.95,0.45],[0.2,0.75],[0.58,0.85],[0.44,0.08]];
 function skyAbove(image, y0){
   const [r, g, b] = skyTopColor(image), deep = (v) => Math.round(v*0.9), top = y0 - camLift - 6, blend = 46;
   const gr = mctx.createLinearGradient(0, top, 0, y0 + blend);
@@ -2915,6 +2923,25 @@ function skyAbove(image, y0){
   gr.addColorStop(Math.max(0.01, (y0 - top)/(y0 + blend - top)), `rgba(${r},${g},${b},1)`);
   gr.addColorStop(1, `rgba(${r},${g},${b},0)`);
   mctx.fillStyle = gr; mctx.fillRect(0, top, W, y0 + blend - top);
+  const band = y0 - top, key = skyKeyOf(image), list = SKY_CLOUDS[key] || SKY_CLOUDS.day, s = Math.max(W/image.width, H/image.height);
+  if (key === "night" || NIGHT > 0.5) {               // a few soft stars like the painted ones
+    mctx.save();
+    SKY_STARS.forEach(([fx, fy], i) => { const x = fx*W, y = top + 8 + fy*(band - 10), tw = 0.6 + 0.4*Math.sin(performance.now()/900 + i*1.7), r = (i % 3 === 0 ? 2.4 : 1.6);
+      const g = mctx.createRadialGradient(x, y, 0, x, y, r*4); g.addColorStop(0, `rgba(255,236,190,${0.9*tw})`); g.addColorStop(1, "rgba(255,236,190,0)");
+      mctx.fillStyle = g; mctx.beginPath(); mctx.arc(x, y, r*4, 0, 7); mctx.fill(); });
+    mctx.restore();
+  }
+  if (skyCloudImg && skyCloudImg.complete && skyCloudImg.naturalWidth) {
+    mctx.save(); mctx.imageSmoothingEnabled = true;
+    const drift = performance.now()/1000*2.2;
+    SKY_LAYOUT.slice(0, band > 110 ? 4 : 3).forEach(([fx, fy, ci, k], i) => {
+      const [sx, sy, sw, sh] = list[ci % list.length], w = sw*s*k*1.25, h = sh*s*k*1.25;
+      let x = ((fx*W + drift*(0.6 + i*0.25)) % (W + w)) - w/2, y = top + fy*band - h/2;
+      if (i % 2) { mctx.save(); mctx.translate(x + w/2, 0); mctx.scale(-1, 1); mctx.drawImage(skyCloudImg, sx, sy, sw, sh, -w/2, y, w, h); mctx.restore(); }   // mirrored left-right only
+      else mctx.drawImage(skyCloudImg, sx, sy, sw, sh, x - 0, y, w, h);
+    });
+    mctx.restore();
+  }
 }
 function updateCamLift(dt){ const goal = lanternMode ? Math.round(H*0.16) : 0; camLift += (goal - camLift)*(1 - Math.exp(-dt*3.2)); if (Math.abs(goal - camLift) < 0.3) camLift = goal; }    // lanterns are only shown in this calm view (letters stay in the normal sky)
 const VKEY = "starlight-yard-visitor";
@@ -3124,7 +3151,7 @@ if (VISIT) {
     renderHud();
     lanterns = (y.lanterns || []).slice();
     $("visitWho").textContent = `${yardTitleText()}에 놀러 왔어요`;
-    $("dock").hidden = true; $("visitBar").hidden = false; lanternMode = true; document.documentElement.classList.add("lantern-mode");
+    needSkyClouds(); $("dock").hidden = true; $("visitBar").hidden = false; lanternMode = true; document.documentElement.classList.add("lantern-mode");
     cover.classList.add("done"); setTimeout(() => cover.remove(), 600);
     setInterval(() => { if (!document.hidden) pullLanterns(); }, 45000);
   })();
@@ -3135,6 +3162,7 @@ function yardTitleText(){ try { return ($("yardName") || {}).textContent || "친
 function lanternCountText(){ const n = lanterns.length; $("lanternCount").textContent = n ? `풍등 ${n}개` : "아직 풍등이 없어요"; }
 function enterLanternMode(){
   if (VISIT || lanternMode) return;
+  needSkyClouds();
   if (typeof decoEditing !== "undefined" && decoEditing) setDecoEditing(false);
   try { setBallMode(false); } catch (e) {}
   lanternMode = true; glows = []; bubble = null;

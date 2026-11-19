@@ -1,297 +1,302 @@
 [
-  {
-    "file": "assets/asset-01.png",
-    "mime": "image/png",
-    "bytes": 2559
-  },
-  {
-    "file": "assets/asset-02.png",
-    "mime": "image/png",
-    "bytes": 3681
-  },
-  {
-    "file": "assets/asset-03.woff2",
-    "mime": "font/woff2",
-    "bytes": 504736
-  },
-  {
-    "file": "assets/asset-04.woff2",
-    "mime": "font/woff2",
-    "bytes": 166632
-  },
-  {
-    "file": "assets/asset-05.webp",
-    "mime": "image/webp",
-    "bytes": 397846
-  },
-  {
-    "file": "assets/asset-06.webp",
-    "mime": "image/webp",
-    "bytes": 478906
-  },
-  {
-    "file": "assets/asset-07.webp",
-    "mime": "image/webp",
-    "bytes": 436492
-  },
-  {
-    "file": "assets/asset-08.webp",
-    "mime": "image/webp",
-    "bytes": 400712
-  },
-  {
-    "file": "assets/asset-09.webp",
-    "mime": "image/webp",
-    "bytes": 351906
-  },
-  {
-    "file": "assets/asset-10.webp",
-    "mime": "image/webp",
-    "bytes": 366188
-  },
-  {
-    "file": "assets/asset-11.webp",
-    "mime": "image/webp",
-    "bytes": 326422
-  },
-  {
-    "file": "assets/asset-12.webp",
-    "mime": "image/webp",
-    "bytes": 356380
-  },
-  {
-    "file": "assets/asset-13.webp",
-    "mime": "image/webp",
-    "bytes": 303866
-  },
-  {
-    "file": "assets/asset-14.webp",
-    "mime": "image/webp",
-    "bytes": 344948
-  },
-  {
-    "file": "assets/asset-15.webp",
-    "mime": "image/webp",
-    "bytes": 358048
-  },
-  {
-    "file": "assets/asset-16.webp",
-    "mime": "image/webp",
-    "bytes": 290248
-  },
-  {
-    "file": "assets/asset-17.webp",
-    "mime": "image/webp",
-    "bytes": 322028
-  },
-  {
-    "file": "assets/asset-18.webp",
-    "mime": "image/webp",
-    "bytes": 348330
-  },
-  {
-    "file": "assets/asset-19.webp",
-    "mime": "image/webp",
-    "bytes": 309036
-  },
-  {
-    "file": "assets/asset-20.webp",
-    "mime": "image/webp",
-    "bytes": 308490
-  },
-  {
-    "file": "assets/asset-21.webp",
-    "mime": "image/webp",
-    "bytes": 322682
-  },
-  {
-    "file": "assets/asset-22.webp",
-    "mime": "image/webp",
-    "bytes": 298728
-  },
-  {
-    "file": "assets/asset-23.webp",
-    "mime": "image/webp",
-    "bytes": 347666
-  },
-  {
-    "file": "assets/asset-24.webp",
-    "mime": "image/webp",
-    "bytes": 290258
-  },
-  {
-    "file": "assets/asset-25.webp",
-    "mime": "image/webp",
-    "bytes": 274418
-  },
-  {
-    "file": "assets/asset-26.webp",
-    "mime": "image/webp",
-    "bytes": 344454
-  },
-  {
-    "file": "assets/asset-27.webp",
-    "mime": "image/webp",
-    "bytes": 275588
-  },
-  {
-    "file": "assets/asset-28.webp",
-    "mime": "image/webp",
-    "bytes": 293726
-  },
-  {
-    "file": "assets/asset-29.webp",
-    "mime": "image/webp",
-    "bytes": 118592
-  },
-  {
-    "file": "assets/asset-30.webp",
-    "mime": "image/webp",
-    "bytes": 104806
-  },
-  {
-    "file": "assets/asset-31.webp",
-    "mime": "image/webp",
-    "bytes": 134718
-  },
-  {
-    "file": "assets/asset-32.webp",
-    "mime": "image/webp",
-    "bytes": 138570
-  },
-  {
-    "file": "assets/asset-33.webp",
-    "mime": "image/webp",
-    "bytes": 531594
-  },
-  {
-    "file": "assets/new-pet-poses.webp",
-    "mime": "image/webp",
-    "bytes": 403416
-  },
-  {
-    "file": "assets/new-pet-walk-0.webp",
-    "mime": "image/webp",
-    "bytes": 374436
-  },
-  {
-    "file": "assets/new-pet-walk-1.webp",
-    "mime": "image/webp",
-    "bytes": 386036
-  },
-  {
-    "file": "assets/new-pet-walk-2.webp",
-    "mime": "image/webp",
-    "bytes": 380100
-  },
-  {
-    "file": "assets/species-props.webp",
-    "mime": "image/webp",
-    "bytes": 183956
-  },
-  {
-    "file": "assets/bend-0.webp",
-    "mime": "image/webp",
-    "bytes": 475676
-  },
-  {
-    "file": "assets/bend-1.webp",
-    "mime": "image/webp",
-    "bytes": 538832
-  },
-  {
-    "file": "assets/bend-2.webp",
-    "mime": "image/webp",
-    "bytes": 466144
-  },
-  {
-    "file": "assets/bend-3.webp",
-    "mime": "image/webp",
-    "bytes": 488912
-  },
-  {
-    "file": "assets/bend-4.webp",
-    "mime": "image/webp",
-    "bytes": 404314
-  },
-  {
-    "file": "assets/bend-5.webp",
-    "mime": "image/webp",
-    "bytes": 389872
-  },
-  {
-    "file": "assets/bend-6.webp",
-    "mime": "image/webp",
-    "bytes": 440670
-  },
-  {
-    "file": "assets/reach-0.webp",
-    "mime": "image/webp",
-    "bytes": 248974
-  },
-  {
-    "file": "assets/reach-1.webp",
-    "mime": "image/webp",
-    "bytes": 269220
-  },
-  {
-    "file": "assets/reach-2.webp",
-    "mime": "image/webp",
-    "bytes": 258890
-  },
-  {
-    "file": "assets/reach-3.webp",
-    "mime": "image/webp",
-    "bytes": 254654
-  },
-  {
-    "file": "assets/reach-4.webp",
-    "mime": "image/webp",
-    "bytes": 238960
-  },
-  {
-    "file": "assets/reach-5.webp",
-    "mime": "image/webp",
-    "bytes": 229012
-  },
-  {
-    "file": "assets/reach-6.webp",
-    "mime": "image/webp",
-    "bytes": 274672
-  },
-  {
-    "file": "assets/crouch-0.webp",
-    "mime": "image/webp",
-    "bytes": 289510
-  },
-  {
-    "file": "assets/crouch-1.webp",
-    "mime": "image/webp",
-    "bytes": 316604
-  },
-  {
-    "file": "assets/crouch-2.webp",
-    "mime": "image/webp",
-    "bytes": 300072
-  },
-  {
-    "file": "assets/crouch-3.webp",
-    "mime": "image/webp",
-    "bytes": 292398
-  },
-  {
-    "file": "assets/crouch-4.webp",
-    "mime": "image/webp",
-    "bytes": 302702
-  },
-  {
-    "file": "assets/crouch-5.webp",
-    "mime": "image/webp",
-    "bytes": 256276
-  },
-  {
-    "file": "assets/crouch-6.webp",
-    "mime": "image/webp",
-    "bytes": 252004
-  }
+ {
+  "file": "assets/asset-01.png",
+  "mime": "image/png",
+  "bytes": 2559
+ },
+ {
+  "file": "assets/asset-02.png",
+  "mime": "image/png",
+  "bytes": 3681
+ },
+ {
+  "file": "assets/asset-03.woff2",
+  "mime": "font/woff2",
+  "bytes": 504736
+ },
+ {
+  "file": "assets/asset-04.woff2",
+  "mime": "font/woff2",
+  "bytes": 166632
+ },
+ {
+  "file": "assets/asset-05.webp",
+  "mime": "image/webp",
+  "bytes": 397846
+ },
+ {
+  "file": "assets/asset-06.webp",
+  "mime": "image/webp",
+  "bytes": 478906
+ },
+ {
+  "file": "assets/asset-07.webp",
+  "mime": "image/webp",
+  "bytes": 436492
+ },
+ {
+  "file": "assets/asset-08.webp",
+  "mime": "image/webp",
+  "bytes": 400712
+ },
+ {
+  "file": "assets/asset-09.webp",
+  "mime": "image/webp",
+  "bytes": 351906
+ },
+ {
+  "file": "assets/asset-10.webp",
+  "mime": "image/webp",
+  "bytes": 366188
+ },
+ {
+  "file": "assets/asset-11.webp",
+  "mime": "image/webp",
+  "bytes": 326422
+ },
+ {
+  "file": "assets/asset-12.webp",
+  "mime": "image/webp",
+  "bytes": 356380
+ },
+ {
+  "file": "assets/asset-13.webp",
+  "mime": "image/webp",
+  "bytes": 303866
+ },
+ {
+  "file": "assets/asset-14.webp",
+  "mime": "image/webp",
+  "bytes": 344948
+ },
+ {
+  "file": "assets/asset-15.webp",
+  "mime": "image/webp",
+  "bytes": 358048
+ },
+ {
+  "file": "assets/asset-16.webp",
+  "mime": "image/webp",
+  "bytes": 290248
+ },
+ {
+  "file": "assets/asset-17.webp",
+  "mime": "image/webp",
+  "bytes": 322028
+ },
+ {
+  "file": "assets/asset-18.webp",
+  "mime": "image/webp",
+  "bytes": 348330
+ },
+ {
+  "file": "assets/asset-19.webp",
+  "mime": "image/webp",
+  "bytes": 309036
+ },
+ {
+  "file": "assets/asset-20.webp",
+  "mime": "image/webp",
+  "bytes": 308490
+ },
+ {
+  "file": "assets/asset-21.webp",
+  "mime": "image/webp",
+  "bytes": 322682
+ },
+ {
+  "file": "assets/asset-22.webp",
+  "mime": "image/webp",
+  "bytes": 298728
+ },
+ {
+  "file": "assets/asset-23.webp",
+  "mime": "image/webp",
+  "bytes": 347666
+ },
+ {
+  "file": "assets/asset-24.webp",
+  "mime": "image/webp",
+  "bytes": 290258
+ },
+ {
+  "file": "assets/asset-25.webp",
+  "mime": "image/webp",
+  "bytes": 274418
+ },
+ {
+  "file": "assets/asset-26.webp",
+  "mime": "image/webp",
+  "bytes": 344454
+ },
+ {
+  "file": "assets/asset-27.webp",
+  "mime": "image/webp",
+  "bytes": 275588
+ },
+ {
+  "file": "assets/asset-28.webp",
+  "mime": "image/webp",
+  "bytes": 293726
+ },
+ {
+  "file": "assets/asset-29.webp",
+  "mime": "image/webp",
+  "bytes": 118592
+ },
+ {
+  "file": "assets/asset-30.webp",
+  "mime": "image/webp",
+  "bytes": 104806
+ },
+ {
+  "file": "assets/asset-31.webp",
+  "mime": "image/webp",
+  "bytes": 134718
+ },
+ {
+  "file": "assets/asset-32.webp",
+  "mime": "image/webp",
+  "bytes": 138570
+ },
+ {
+  "file": "assets/asset-33.webp",
+  "mime": "image/webp",
+  "bytes": 531594
+ },
+ {
+  "file": "assets/new-pet-poses.webp",
+  "mime": "image/webp",
+  "bytes": 403416
+ },
+ {
+  "file": "assets/new-pet-walk-0.webp",
+  "mime": "image/webp",
+  "bytes": 374436
+ },
+ {
+  "file": "assets/new-pet-walk-1.webp",
+  "mime": "image/webp",
+  "bytes": 386036
+ },
+ {
+  "file": "assets/new-pet-walk-2.webp",
+  "mime": "image/webp",
+  "bytes": 380100
+ },
+ {
+  "file": "assets/species-props.webp",
+  "mime": "image/webp",
+  "bytes": 183956
+ },
+ {
+  "file": "assets/bend-0.webp",
+  "mime": "image/webp",
+  "bytes": 475676
+ },
+ {
+  "file": "assets/bend-1.webp",
+  "mime": "image/webp",
+  "bytes": 538832
+ },
+ {
+  "file": "assets/bend-2.webp",
+  "mime": "image/webp",
+  "bytes": 466144
+ },
+ {
+  "file": "assets/bend-3.webp",
+  "mime": "image/webp",
+  "bytes": 488912
+ },
+ {
+  "file": "assets/bend-4.webp",
+  "mime": "image/webp",
+  "bytes": 404314
+ },
+ {
+  "file": "assets/bend-5.webp",
+  "mime": "image/webp",
+  "bytes": 389872
+ },
+ {
+  "file": "assets/bend-6.webp",
+  "mime": "image/webp",
+  "bytes": 440670
+ },
+ {
+  "file": "assets/reach-0.webp",
+  "mime": "image/webp",
+  "bytes": 248974
+ },
+ {
+  "file": "assets/reach-1.webp",
+  "mime": "image/webp",
+  "bytes": 269220
+ },
+ {
+  "file": "assets/reach-2.webp",
+  "mime": "image/webp",
+  "bytes": 258890
+ },
+ {
+  "file": "assets/reach-3.webp",
+  "mime": "image/webp",
+  "bytes": 254654
+ },
+ {
+  "file": "assets/reach-4.webp",
+  "mime": "image/webp",
+  "bytes": 238960
+ },
+ {
+  "file": "assets/reach-5.webp",
+  "mime": "image/webp",
+  "bytes": 229012
+ },
+ {
+  "file": "assets/reach-6.webp",
+  "mime": "image/webp",
+  "bytes": 274672
+ },
+ {
+  "file": "assets/crouch-0.webp",
+  "mime": "image/webp",
+  "bytes": 289510
+ },
+ {
+  "file": "assets/crouch-1.webp",
+  "mime": "image/webp",
+  "bytes": 316604
+ },
+ {
+  "file": "assets/crouch-2.webp",
+  "mime": "image/webp",
+  "bytes": 300072
+ },
+ {
+  "file": "assets/crouch-3.webp",
+  "mime": "image/webp",
+  "bytes": 292398
+ },
+ {
+  "file": "assets/crouch-4.webp",
+  "mime": "image/webp",
+  "bytes": 302702
+ },
+ {
+  "file": "assets/crouch-5.webp",
+  "mime": "image/webp",
+  "bytes": 256276
+ },
+ {
+  "file": "assets/crouch-6.webp",
+  "mime": "image/webp",
+  "bytes": 252004
+ },
+ {
+  "file": "assets/sky-clouds.webp",
+  "mime": "image/webp",
+  "bytes": 72580
+ }
 ]
