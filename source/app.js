@@ -1382,6 +1382,7 @@ function frame(now){
   ctx.imageSmoothingEnabled = false; ctx.clearRect(0,0,LW,LH);
   drawBackdrop(pal, h, t);
   mctx.setTransform(DPR,0,0,DPR,0,0); mctx.imageSmoothingEnabled = false; mctx.clearRect(0,0,W,H);
+  updateCamLift(dt); mctx.translate(0, camLift);   // lantern view: the camera tilts up a little
   drawClayBackground(h,t);
   drawSkyLanterns(t);
   const lamp = drawScene(t);
@@ -1390,10 +1391,11 @@ function frame(now){
   if (lamp && NIGHT > 0.05) { mctx.save(); mctx.globalCompositeOperation = "lighter"; glow(mctx, lamp.x, lamp.y, 36*lamp.k, "255,196,120", 0.42*NIGHT); mctx.restore(); }
   drawOverlayFx(); if (has("butterfly")) drawButterflies(t, dt);
   if (!lanternMode) drawBgLine(dt);
+  mctx.setTransform(DPR,0,0,DPR,0,0);
   if (now - (window.__bloomAt || 0) > 200) { window.__bloomAt = now; bctx.imageSmoothingEnabled = true; bctx.clearRect(0,0,bcv.width,bcv.height); drawArtImage(bctx,cv, 0, 0, bcv.width, bcv.height); }   // the soft glow changes slowly: refresh it 5x a second, not every frame
   mctx.save(); mctx.imageSmoothingEnabled = true; mctx.globalCompositeOperation = "screen"; mctx.globalAlpha = 0.2 + 0.14*NIGHT; drawArtImage(mctx,bcv, 0, 0, W, H); mctx.restore();
   if (vignette) { mctx.fillStyle = vignette; mctx.fillRect(0, 0, W, H); }
-  drawZ(t); drawBubble();
+  mctx.save(); mctx.translate(0, camLift); drawZ(t); drawBubble(); mctx.restore();
   requestAnimationFrame(frame);
 }
 
@@ -2164,7 +2166,7 @@ function sceneTimeLayers(h){
 }
 function drawClayBackground(h,t){
  const [a,b,blend]=sceneTimeLayers(h),first=sceneBackgrounds.get(a)||sceneBackgrounds.get(b),second=sceneBackgrounds.get(b)||first;
- const draw=image=>{const s=Math.max(W/image.width,H/image.height);mctx.drawImage(image,(W-image.width*s)/2,groundY-image.height*s*.56,image.width*s,image.height*s);};
+ const draw=image=>{const s=Math.max(W/image.width,H/image.height),y0=groundY-image.height*s*.56;if(camLift>0.5){const hh=camLift+8;mctx.save();mctx.translate(0,y0);mctx.scale(1,-1);mctx.drawImage(image,0,0,image.width,hh/s,(W-image.width*s)/2,-2,image.width*s,hh);mctx.restore();}mctx.drawImage(image,(W-image.width*s)/2,y0,image.width*s,image.height*s);};
  mctx.save();mctx.imageSmoothingEnabled=true;mctx.imageSmoothingQuality='high';
  const g=mctx.createLinearGradient(0,0,0,H);g.addColorStop(0,NIGHT>.5?'#49405f':'#d6e4ed');g.addColorStop(.56,NIGHT>.5?'#a0b4b5':'#eff2e4');g.addColorStop(1,NIGHT>.5?'#71958d':'#c3d8ad');mctx.fillStyle=g;mctx.fillRect(0,0,W,H);
  if(first)draw(first);if(second&&second!==first){mctx.globalAlpha=blend;draw(second);mctx.globalAlpha=1;}
@@ -2877,6 +2879,7 @@ if (/debug/.test(location.hash + location.search)) enableScreenCheck();
 
 
 
+
 /* ===== yard sharing + sky lanterns (Claude) =====
  * Owner makes a share code; anyone with the code sees the yard read-only and can only launch sky lanterns.
  * Visitors never touch their own saved yard: save() is a no-op while visiting (window.__syVisit). */
@@ -2891,7 +2894,8 @@ async function syRpc(fn, args){
 const syErr = (e) => { const m = String(e && e.message || e); return /one_per_day/.test(m) ? "풍등은 하루에 하나만 띄울 수 있어요. 내일 또 띄워 주세요" : /slow_down/.test(m) ? "잠시 뒤에 다시 띄워 주세요" : /no_yard|not found/i.test(m) ? "공유가 끝난 마당이에요" : /too_big/.test(m) ? "사진이 너무 커서 공유할 수 없어요. 사진 보여주기를 꺼 주세요" : "연결이 잠깐 불안정해요. 조금 뒤에 다시 해 주세요"; };
 const VISIT = (() => { const m = /[?&]visit=([A-Za-z0-9]{4,10})/.exec(location.search); return m ? m[1].toUpperCase() : null; })();
 let lanterns = [];          // {id, name, by_owner, at, born?}
-var lanternMode = false;    // lanterns are only shown in this calm view (letters stay in the normal sky)
+var lanternMode = false, camLift = 0;   // camLift: how far the yard is pushed down while looking up at the lanterns
+function updateCamLift(dt){ const goal = lanternMode ? Math.round(H*0.16) : 0; camLift += (goal - camLift)*(1 - Math.exp(-dt*3.2)); if (Math.abs(goal - camLift) < 0.3) camLift = goal; }    // lanterns are only shown in this calm view (letters stay in the normal sky)
 const VKEY = "starlight-yard-visitor";
 const DKEY = "starlight-yard-device", LDKEY = "starlight-yard-lantern-day";
 const deviceId = (() => { try { let d = localStorage.getItem(DKEY); if (!d) { d = "d" + Date.now().toString(36) + Math.random().toString(36).slice(2, 12); localStorage.setItem(DKEY, d); } return d; } catch (e) { return "d-" + Math.random().toString(36).slice(2, 14); } })();
@@ -2933,7 +2937,7 @@ function drawSkyLanterns(t){
   lanternHits = [];
   if (!lanternMode || !lanterns.length || !W) return;
   // depth: the newest lantern is close (big, low, bright); each older one has drifted further away (smaller, higher, fainter, toward the middle)
-  const list = lanterns.slice(0, 40), n = list.length, top = 92, bot = Math.max(top + 80, groundY*0.86), now = performance.now(), cx = W/2;
+  const list = lanterns.slice(0, 40), n = list.length, top = 92 - camLift, bot = Math.max(top + 80, groundY*0.86), now = performance.now(), cx = W/2;
   const glowA = 0.45 + 0.55*(typeof NIGHT === "number" ? NIGHT : 0), base = Math.min(1.35, Math.max(0.85, W/400));
   const placed = list.map((l, i) => {
     const q = lanternSpot(l), near = n <= 1 ? 1 : Math.max(0.1, Math.pow(0.87, i));
@@ -2985,7 +2989,7 @@ $("lanternDel").addEventListener("click", async () => {
     if (!lanternMode) return;
     const inUi = ev.target.closest && ev.target.closest(".visit-bar,.veil,.lantern-tag,#visitCover,.toast");
     if (inUi) return;
-    const r = cv.getBoundingClientRect(), x = (ev.clientX - r.left)/camZ, y = (ev.clientY - r.top)/camZ;
+    const r = cv.getBoundingClientRect(), x = (ev.clientX - r.left)/camZ, y = (ev.clientY - r.top)/camZ - camLift;
     if (!VISIT) for (let i = lanternHits.length - 1; i >= 0; i--) { const h = lanternHits[i]; if (Math.hypot(h.x - x, h.y - y) < h.r) { ev.stopPropagation(); showLanternTag(h.l, ev.clientX, ev.clientY); return; } }
     ev.stopPropagation(); if (ev.target === cv) ev.preventDefault();
   }, true);

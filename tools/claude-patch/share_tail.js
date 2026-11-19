@@ -13,7 +13,8 @@ async function syRpc(fn, args){
 const syErr = (e) => { const m = String(e && e.message || e); return /one_per_day/.test(m) ? "풍등은 하루에 하나만 띄울 수 있어요. 내일 또 띄워 주세요" : /slow_down/.test(m) ? "잠시 뒤에 다시 띄워 주세요" : /no_yard|not found/i.test(m) ? "공유가 끝난 마당이에요" : /too_big/.test(m) ? "사진이 너무 커서 공유할 수 없어요. 사진 보여주기를 꺼 주세요" : "연결이 잠깐 불안정해요. 조금 뒤에 다시 해 주세요"; };
 const VISIT = (() => { const m = /[?&]visit=([A-Za-z0-9]{4,10})/.exec(location.search); return m ? m[1].toUpperCase() : null; })();
 let lanterns = [];          // {id, name, by_owner, at, born?}
-var lanternMode = false;    // lanterns are only shown in this calm view (letters stay in the normal sky)
+var lanternMode = false, camLift = 0;   // camLift: how far the yard is pushed down while looking up at the lanterns
+function updateCamLift(dt){ const goal = lanternMode ? Math.round(H*0.16) : 0; camLift += (goal - camLift)*(1 - Math.exp(-dt*3.2)); if (Math.abs(goal - camLift) < 0.3) camLift = goal; }    // lanterns are only shown in this calm view (letters stay in the normal sky)
 const VKEY = "starlight-yard-visitor";
 const DKEY = "starlight-yard-device", LDKEY = "starlight-yard-lantern-day";
 const deviceId = (() => { try { let d = localStorage.getItem(DKEY); if (!d) { d = "d" + Date.now().toString(36) + Math.random().toString(36).slice(2, 12); localStorage.setItem(DKEY, d); } return d; } catch (e) { return "d-" + Math.random().toString(36).slice(2, 14); } })();
@@ -55,7 +56,7 @@ function drawSkyLanterns(t){
   lanternHits = [];
   if (!lanternMode || !lanterns.length || !W) return;
   // depth: the newest lantern is close (big, low, bright); each older one has drifted further away (smaller, higher, fainter, toward the middle)
-  const list = lanterns.slice(0, 40), n = list.length, top = 92, bot = Math.max(top + 80, groundY*0.86), now = performance.now(), cx = W/2;
+  const list = lanterns.slice(0, 40), n = list.length, top = 92 - camLift, bot = Math.max(top + 80, groundY*0.86), now = performance.now(), cx = W/2;
   const glowA = 0.45 + 0.55*(typeof NIGHT === "number" ? NIGHT : 0), base = Math.min(1.35, Math.max(0.85, W/400));
   const placed = list.map((l, i) => {
     const q = lanternSpot(l), near = n <= 1 ? 1 : Math.max(0.1, Math.pow(0.87, i));
@@ -107,7 +108,7 @@ $("lanternDel").addEventListener("click", async () => {
     if (!lanternMode) return;
     const inUi = ev.target.closest && ev.target.closest(".visit-bar,.veil,.lantern-tag,#visitCover,.toast");
     if (inUi) return;
-    const r = cv.getBoundingClientRect(), x = (ev.clientX - r.left)/camZ, y = (ev.clientY - r.top)/camZ;
+    const r = cv.getBoundingClientRect(), x = (ev.clientX - r.left)/camZ, y = (ev.clientY - r.top)/camZ - camLift;
     if (!VISIT) for (let i = lanternHits.length - 1; i >= 0; i--) { const h = lanternHits[i]; if (Math.hypot(h.x - x, h.y - y) < h.r) { ev.stopPropagation(); showLanternTag(h.l, ev.clientX, ev.clientY); return; } }
     ev.stopPropagation(); if (ev.target === cv) ev.preventDefault();
   }, true);
