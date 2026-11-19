@@ -2166,7 +2166,7 @@ function sceneTimeLayers(h){
 }
 function drawClayBackground(h,t){
  const [a,b,blend]=sceneTimeLayers(h),first=sceneBackgrounds.get(a)||sceneBackgrounds.get(b),second=sceneBackgrounds.get(b)||first;
- const draw=image=>{const s=Math.max(W/image.width,H/image.height),y0=groundY-image.height*s*.56;if(camLift>0.5){const hh=camLift+8;mctx.save();mctx.translate(0,y0);mctx.scale(1,-1);mctx.drawImage(image,0,0,image.width,hh/s,(W-image.width*s)/2,-2,image.width*s,hh);mctx.restore();}mctx.drawImage(image,(W-image.width*s)/2,y0,image.width*s,image.height*s);};
+ const draw=image=>{const s=Math.max(W/image.width,H/image.height),y0=groundY-image.height*s*.56;mctx.drawImage(image,(W-image.width*s)/2,y0,image.width*s,image.height*s);if(camLift>0.5)skyAbove(image,y0);return;mctx.drawImage(image,(W-image.width*s)/2,y0,image.width*s,image.height*s);};
  mctx.save();mctx.imageSmoothingEnabled=true;mctx.imageSmoothingQuality='high';
  const g=mctx.createLinearGradient(0,0,0,H);g.addColorStop(0,NIGHT>.5?'#49405f':'#d6e4ed');g.addColorStop(.56,NIGHT>.5?'#a0b4b5':'#eff2e4');g.addColorStop(1,NIGHT>.5?'#71958d':'#c3d8ad');mctx.fillStyle=g;mctx.fillRect(0,0,W,H);
  if(first)draw(first);if(second&&second!==first){mctx.globalAlpha=blend;draw(second);mctx.globalAlpha=1;}
@@ -2880,6 +2880,7 @@ if (/debug/.test(location.hash + location.search)) enableScreenCheck();
 
 
 
+
 /* ===== yard sharing + sky lanterns (Claude) =====
  * Owner makes a share code; anyone with the code sees the yard read-only and can only launch sky lanterns.
  * Visitors never touch their own saved yard: save() is a no-op while visiting (window.__syVisit). */
@@ -2895,6 +2896,26 @@ const syErr = (e) => { const m = String(e && e.message || e); return /one_per_da
 const VISIT = (() => { const m = /[?&]visit=([A-Za-z0-9]{4,10})/.exec(location.search); return m ? m[1].toUpperCase() : null; })();
 let lanterns = [];          // {id, name, by_owner, at, born?}
 var lanternMode = false, camLift = 0;   // camLift: how far the yard is pushed down while looking up at the lanterns
+/* the strip of sky revealed above the painting: plain sky colour (no clouds), fading into the painting so there's no seam */
+const skyTopCols = new WeakMap();
+function skyTopColor(image){
+  let c = skyTopCols.get(image); if (c) return c;
+  try { const k = document.createElement("canvas"); k.width = 24; k.height = 4; const x = k.getContext("2d", {willReadFrequently: true});
+    x.drawImage(image, 0, 0, image.width, Math.max(2, image.height*0.02), 0, 0, 24, 4);
+    const d = x.getImageData(0, 0, 24, 4).data, px = []; for (let i = 0; i < d.length; i += 4) px.push([d[i], d[i+1], d[i+2], d[i]+d[i+1]+d[i+2]]);
+    px.sort((a, b) => a[3] - b[3]); const mid = px.slice(Math.floor(px.length*0.1), Math.floor(px.length*0.6));   // skip bright cloud pixels
+    const avg = [0,1,2].map(j => Math.round(mid.reduce((m, p) => m + p[j], 0)/mid.length)); c = avg;
+  } catch (e) { c = [200, 214, 232]; }
+  skyTopCols.set(image, c); return c;
+}
+function skyAbove(image, y0){
+  const [r, g, b] = skyTopColor(image), deep = (v) => Math.round(v*0.9), top = y0 - camLift - 6, blend = 46;
+  const gr = mctx.createLinearGradient(0, top, 0, y0 + blend);
+  gr.addColorStop(0, `rgb(${deep(r)},${deep(g)},${deep(b)})`);
+  gr.addColorStop(Math.max(0.01, (y0 - top)/(y0 + blend - top)), `rgba(${r},${g},${b},1)`);
+  gr.addColorStop(1, `rgba(${r},${g},${b},0)`);
+  mctx.fillStyle = gr; mctx.fillRect(0, top, W, y0 + blend - top);
+}
 function updateCamLift(dt){ const goal = lanternMode ? Math.round(H*0.16) : 0; camLift += (goal - camLift)*(1 - Math.exp(-dt*3.2)); if (Math.abs(goal - camLift) < 0.3) camLift = goal; }    // lanterns are only shown in this calm view (letters stay in the normal sky)
 const VKEY = "starlight-yard-visitor";
 const DKEY = "starlight-yard-device", LDKEY = "starlight-yard-lantern-day";

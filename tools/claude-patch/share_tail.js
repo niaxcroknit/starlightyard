@@ -14,6 +14,26 @@ const syErr = (e) => { const m = String(e && e.message || e); return /one_per_da
 const VISIT = (() => { const m = /[?&]visit=([A-Za-z0-9]{4,10})/.exec(location.search); return m ? m[1].toUpperCase() : null; })();
 let lanterns = [];          // {id, name, by_owner, at, born?}
 var lanternMode = false, camLift = 0;   // camLift: how far the yard is pushed down while looking up at the lanterns
+/* the strip of sky revealed above the painting: plain sky colour (no clouds), fading into the painting so there's no seam */
+const skyTopCols = new WeakMap();
+function skyTopColor(image){
+  let c = skyTopCols.get(image); if (c) return c;
+  try { const k = document.createElement("canvas"); k.width = 24; k.height = 4; const x = k.getContext("2d", {willReadFrequently: true});
+    x.drawImage(image, 0, 0, image.width, Math.max(2, image.height*0.02), 0, 0, 24, 4);
+    const d = x.getImageData(0, 0, 24, 4).data, px = []; for (let i = 0; i < d.length; i += 4) px.push([d[i], d[i+1], d[i+2], d[i]+d[i+1]+d[i+2]]);
+    px.sort((a, b) => a[3] - b[3]); const mid = px.slice(Math.floor(px.length*0.1), Math.floor(px.length*0.6));   // skip bright cloud pixels
+    const avg = [0,1,2].map(j => Math.round(mid.reduce((m, p) => m + p[j], 0)/mid.length)); c = avg;
+  } catch (e) { c = [200, 214, 232]; }
+  skyTopCols.set(image, c); return c;
+}
+function skyAbove(image, y0){
+  const [r, g, b] = skyTopColor(image), deep = (v) => Math.round(v*0.9), top = y0 - camLift - 6, blend = 46;
+  const gr = mctx.createLinearGradient(0, top, 0, y0 + blend);
+  gr.addColorStop(0, `rgb(${deep(r)},${deep(g)},${deep(b)})`);
+  gr.addColorStop(Math.max(0.01, (y0 - top)/(y0 + blend - top)), `rgba(${r},${g},${b},1)`);
+  gr.addColorStop(1, `rgba(${r},${g},${b},0)`);
+  mctx.fillStyle = gr; mctx.fillRect(0, top, W, y0 + blend - top);
+}
 function updateCamLift(dt){ const goal = lanternMode ? Math.round(H*0.16) : 0; camLift += (goal - camLift)*(1 - Math.exp(-dt*3.2)); if (Math.abs(goal - camLift) < 0.3) camLift = goal; }    // lanterns are only shown in this calm view (letters stay in the normal sky)
 const VKEY = "starlight-yard-visitor";
 const DKEY = "starlight-yard-device", LDKEY = "starlight-yard-lantern-day";
