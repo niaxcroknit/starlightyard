@@ -2882,6 +2882,8 @@ if (/debug/.test(location.hash + location.search)) enableScreenCheck();
 
 
 
+
+
 /* ===== yard sharing + sky lanterns (Claude) =====
  * Owner makes a share code; anyone with the code sees the yard read-only and can only launch sky lanterns.
  * Visitors never touch their own saved yard: save() is a no-op while visiting (window.__syVisit). */
@@ -2943,7 +2945,14 @@ function skyAbove(image, y0){
     mctx.restore();
   }
 }
-function updateCamLift(dt){ const goal = lanternMode ? Math.round(H*0.16) : 0; camLift += (goal - camLift)*(1 - Math.exp(-dt*3.2)); if (Math.abs(goal - camLift) < 0.3) camLift = goal; }    // lanterns are only shown in this calm view (letters stay in the normal sky)
+var camFrom = 0, camGoal = 0, camStart = 0;
+const CAM_MS = 900, camEase = (u) => u < 0.5 ? 4*u*u*u : 1 - Math.pow(-2*u + 2, 3)/2;   // slow start, slow stop
+function updateCamLift(dt){
+  const goal = lanternMode ? Math.round(H*0.16) : 0, now = performance.now();
+  if (goal !== camGoal) { camFrom = camLift; camGoal = goal; camStart = now; }
+  const u = Math.min(1, (now - camStart)/CAM_MS);
+  camLift = camFrom + (camGoal - camFrom)*camEase(u);
+}    // lanterns are only shown in this calm view (letters stay in the normal sky)
 const VKEY = "starlight-yard-visitor";
 const DKEY = "starlight-yard-device", LDKEY = "starlight-yard-lantern-day";
 const deviceId = (() => { try { let d = localStorage.getItem(DKEY); if (!d) { d = "d" + Date.now().toString(36) + Math.random().toString(36).slice(2, 12); localStorage.setItem(DKEY, d); } return d; } catch (e) { return "d-" + Math.random().toString(36).slice(2, 14); } })();
@@ -2983,7 +2992,8 @@ function lanternSpot(l){
 }
 function drawSkyLanterns(t){
   lanternHits = [];
-  if (!lanternMode || !lanterns.length || !W) return;
+  if ((!lanternMode && camLift < 0.5) || !lanterns.length || !W) return;
+  const fade = Math.max(0, Math.min(1, camLift/Math.max(1, H*0.16)));   // lanterns appear and leave together with the camera slide
   // depth: the newest lantern is close (big, low, bright); each older one has drifted further away (smaller, higher, fainter, toward the middle)
   const list = lanterns.slice(0, 40), n = list.length, top = 92 - camLift, bot = Math.max(top + 80, groundY*0.86), now = performance.now(), cx = W/2;
   const glowA = 0.45 + 0.55*(typeof NIGHT === "number" ? NIGHT : 0), base = Math.min(1.35, Math.max(0.85, W/400));
@@ -2994,7 +3004,7 @@ function drawSkyLanterns(t){
     let x = hx + Math.sin(t*0.23 + q.u4*9)*5*near;                          // use the whole width; height alone carries the distance
     const yn = Math.max(0.02, Math.min(0.96, 0.05 + 0.78*near + (q.u2 - 0.5)*(0.12 + 0.3*(1 - near))));
     let y = top + yn*(bot - top) + Math.sin(t*0.6 + q.u1*6)*3*(0.4 + 0.6*near);
-    let a = 0.3 + 0.7*near;
+    let a = (0.3 + 0.7*near)*fade*fade;
     if (l.born) { const p = Math.min(1, (now - l.born)/5200), e = 1 - Math.pow(1 - p, 3); y = (groundY + 40) + (y - groundY - 40)*e; a *= Math.min(1, p*3); if (p >= 1) l.born = 0; }
     return {l, x, y, s, a, near};
   });
@@ -3003,7 +3013,7 @@ function drawSkyLanterns(t){
     const {l, x, y, s, a, near} = placed[k], w = 26*s, h = 34*s, gr = 120*s;
     mctx.globalAlpha = a*glowA*(0.55 + 0.45*near); mctx.drawImage(lanternGlow, x - gr/2, y - gr/2, gr, gr);
     mctx.globalAlpha = a; mctx.drawImage(lanternArt, x - w*0.62, y - h*0.62, w*1.23, h*1.23);
-    lanternHits.push({l, x, y, r: Math.max(18, 20*s)});
+    if (lanternMode) lanternHits.push({l, x, y, r: Math.max(18, 20*s)});
   }
   mctx.restore();
 }
@@ -3167,14 +3177,18 @@ function enterLanternMode(){
   try { setBallMode(false); } catch (e) {}
   lanternMode = true; glows = []; bubble = null;
   document.documentElement.classList.add("lantern-mode");
-  $("dock").hidden = true; $("lanternBar").hidden = false; lanternCountText();
+  const bar = $("lanternBar"); bar.classList.add("off"); bar.hidden = false; lanternCountText();
+  requestAnimationFrame(() => requestAnimationFrame(() => bar.classList.remove("off")));
+  clearTimeout(window.__dockT); window.__dockT = setTimeout(() => { if (lanternMode) $("dock").hidden = true; }, 520);
   if (G.share) pullLanterns().then(lanternCountText);
   if (!G.lanternTip) { G.lanternTip = true; save(); setTimeout(() => toast("풍등을 누르면 누가 띄웠는지 보여요"), 500); }
 }
 function exitLanternMode(){
   lanternMode = false; $("lanternTag").hidden = true;
-  document.documentElement.classList.remove("lantern-mode");
-  $("lanternBar").hidden = true; $("dock").hidden = false;
+  clearTimeout(window.__dockT); $("dock").hidden = false;
+  const bar = $("lanternBar"); bar.classList.add("off");
+  requestAnimationFrame(() => document.documentElement.classList.remove("lantern-mode"));
+  setTimeout(() => { if (!lanternMode) bar.hidden = true; }, 520);
 }
 $("lanternBtn").addEventListener("click", enterLanternMode);
 $("lanternExit").addEventListener("click", exitLanternMode);
