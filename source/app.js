@@ -516,7 +516,8 @@ function requestClayWalk(sp,breedId,view){
    clayWalkLoaded.set(index,keys);
    // Release less recently used animation atlases; all encoded art remains
    // embedded, so a later direction/breed can be decoded again without a fetch.
-   while(clayWalkLoaded.size>9){const old=clayWalkLoaded.keys().next().value;for(const key of clayWalkLoaded.get(old))clayWalkViews.delete(key);clayWalkLoaded.delete(old);}
+   const keepWalk=new Set();for(const p of fam())for(let v=0;v<3;v++){const i=clayWalkAtlasFor.get(p.species+'/'+breedOf(p.species,p.breed).id+'|'+v);if(i!=null)keepWalk.add(i);}
+   for(const old of [...clayWalkLoaded.keys()]){if(clayWalkLoaded.size<=Math.max(9,keepWalk.size+1))break;if(keepWalk.has(old))continue;for(const key of clayWalkLoaded.get(old))clayWalkViews.delete(key);clayWalkLoaded.delete(old);}
    sprCache.clear();clayFaces.clear();
   }catch(e){console.error('Walk frames could not be prepared',index,e);}
   clayWalkPending.delete(index);im.onload=null;im.onerror=null;
@@ -528,7 +529,7 @@ function getAuthoredSprite(sp,breedId,pose,f,expr,side){
  const moving=['walk','run','fwalk','bwalk'].includes(pose),walkKey=sp+'/'+B.id+'|'+view+'|'+(f%4);
  const authored=moving?clayWalkViews.get(walkKey):null;
  if(moving)requestClayWalk(sp,B.id,view);
- const key=[sp,breedId,pose,f,expr,side,authored?'walk-art-v4':'still-art-v4'].join('|');let cached=sprCache.get(key);if(cached)return cached;
+ const key=[sp,breedId,pose,moving?f:0,view===0&&(expr==='b'||expr==='s')?expr:'n',authored?'walk-art-v4':'still-art-v4'].join('|');let cached=sprCache.get(key);if(cached)return cached;
  const raw=authored||clayViews.get(sp+'/'+B.id+'|'+view);
  if(!raw)return {cv:clayCanvas(SW*CLAY_SCALE,SH*CLAY_SCALE),m:{mx:AX,my:GROUND-15},clay:true,ready:false};
  const image=clayExpression(raw,sp,B,view,expr,authored?'walk:'+f:'still');
@@ -557,14 +558,14 @@ function getSprite(sp,breedId,pose,f,expr,side){
  const phase=((f%4)+4)%4,index=Math.floor(phase);
  const a=getAuthoredSprite(sp,breedId,pose,moving?index:Math.floor(f),expr,side);
  if(!moving||!a.motion||RM)return a;
- const blend=clamp((phase-index-.70)/.30,0,1),step=Math.round(blend*16);
+ const blend=clamp((phase-index-.70)/.30,0,1),step=blend<.25?0:blend<.5?5:blend<.75?11:16;   // two in-between frames are enough; keeps the saved set small
  if(!step)return a;
- const b=getAuthoredSprite(sp,breedId,pose,(index+1)%4,expr,side);if(!b.motion)return a;
- const key=[sp,breedId,pose,index,step,expr,side].join('|');let out=smoothSpriteCache.get(key);if(out)return out;
+ const b=getAuthoredSprite(sp,breedId,pose,(index+1)%4,expr,side);if(!b.motion)return a;if(step>=16)return b;
+ const key=[sp,breedId,pose,index,step,expr==='b'||expr==='s'?expr:'n'].join('|');let out=smoothSpriteCache.get(key);if(out)return out;
  const t=step/16,w=t*t*(3-2*t),c=clayCanvas(a.cv.width,a.cv.height),x=c.getContext('2d');
  x.globalAlpha=1-w;x.drawImage(a.cv,0,0);x.globalCompositeOperation='lighter';x.globalAlpha=w;x.drawImage(b.cv,0,0);
  out={...a,cv:c,m:{...a.m,mx:lerp(a.m.mx,b.m.mx,w),my:lerp(a.m.my,b.m.my,w)}};
- if(smoothSpriteCache.size>=32)smoothSpriteCache.delete(smoothSpriteCache.keys().next().value);smoothSpriteCache.set(key,out);return out;
+ if(smoothSpriteCache.size>=128)smoothSpriteCache.delete(smoothSpriteCache.keys().next().value);smoothSpriteCache.set(key,out);return out;
 }
 
 function initClay(){
@@ -2854,6 +2855,7 @@ function enableScreenCheck(){
 }
 if (/debug/.test(location.hash + location.search)) enableScreenCheck();
 { let taps = 0, tt = null; const t = document.querySelector(".title"); if (t) t.addEventListener("click", () => { taps++; clearTimeout(tt); tt = setTimeout(() => taps = 0, 1200); if (taps >= 5) { taps = 0; enableScreenCheck(); } }); }
+
 
 
 
