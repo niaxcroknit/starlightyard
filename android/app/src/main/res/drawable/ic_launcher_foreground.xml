@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- empty: the whole icon picture is the background layer, so the launcher's round/rounded mask frames it -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <solid android:color="#00000000" />
+</shape>

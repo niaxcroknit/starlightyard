@@ -197,7 +197,7 @@ function renderShare(){
   $("sharePhotos").checked = !!G.sharePhotos;
   if (on) $("shareCode").textContent = G.share.code;
 }
-const copyText = async (txt, ok) => { try { await navigator.clipboard.writeText(txt); toast(ok); } catch (e) { toast(G.share ? "코드: " + G.share.code : txt); } };
+const copyText = async (txt, ok) => { if (window.StarlightAndroid && window.StarlightAndroid.copyText) { window.StarlightAndroid.copyText(txt); toast(ok); return; } try { await navigator.clipboard.writeText(txt); toast(ok); } catch (e) { toast(G.share ? "코드: " + G.share.code : txt); } };
 $("settingsBtn").addEventListener("click", renderShare);
 $("sharePhotos").addEventListener("change", () => { G.sharePhotos = $("sharePhotos").checked; save(); });
 $("shareMake").addEventListener("click", async () => {

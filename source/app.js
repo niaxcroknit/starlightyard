@@ -2545,6 +2545,7 @@ async function saveBackup(){
   const blob = new Blob([text], {type: "application/json"});
   let ok = false;
   try {
+    if (window.StarlightAndroid && window.StarlightAndroid.saveFile) { window.StarlightAndroid.saveFile(name, await blob.text()); G.lastBackup = Date.now(); save(); renderBackup(); return; }   // Android app: native "save as"
     const dl = window.claude && window.claude.use ? await window.claude.use("downloads") : null;
     if (dl) { await dl.save({filename: name, data: blob}); ok = true; }
   } catch (e) { if (e && e.code === "declined") return; }
@@ -2894,6 +2895,8 @@ if (/debug/.test(location.hash + location.search)) enableScreenCheck();
 
 
 
+
+
 /* ===== yard sharing + sky lanterns (Claude) =====
  * Owner makes a share code; anyone with the code sees the yard read-only and can only launch sky lanterns.
  * Visitors never touch their own saved yard: save() is a no-op while visiting (window.__syVisit). */
@@ -3092,7 +3095,7 @@ function renderShare(){
   $("sharePhotos").checked = !!G.sharePhotos;
   if (on) $("shareCode").textContent = G.share.code;
 }
-const copyText = async (txt, ok) => { try { await navigator.clipboard.writeText(txt); toast(ok); } catch (e) { toast(G.share ? "코드: " + G.share.code : txt); } };
+const copyText = async (txt, ok) => { if (window.StarlightAndroid && window.StarlightAndroid.copyText) { window.StarlightAndroid.copyText(txt); toast(ok); return; } try { await navigator.clipboard.writeText(txt); toast(ok); } catch (e) { toast(G.share ? "코드: " + G.share.code : txt); } };
 $("settingsBtn").addEventListener("click", renderShare);
 $("sharePhotos").addEventListener("change", () => { G.sharePhotos = $("sharePhotos").checked; save(); });
 $("shareMake").addEventListener("click", async () => {
