@@ -920,7 +920,13 @@ function pickBall(e){
  beginBallGrab(e,false);
 }
 function othersStop(winner){
- for(const o of ents)if(o!==winner&&((ball&&o.chaseRound===ball.round)||(o.target&&o.target.fast))){if(o.catchJump)o.catchJump.missed=true;else startMissedBow(o,ball?.round||'pickup',ball?.x??winner.x);o.happy=.8;}
+ const bx=ball?.x??winner.x,bd=ball?.td??winner.depth;
+ for(const o of ents)if(o!==winner&&((ball&&o.chaseRound===ball.round)||(o.target&&o.target.fast))){
+  const near=Math.hypot((o.x-bx)/Math.max(1,W),(o.depth-bd)/Math.max(1,dMax-dMin)*0.6)<0.075;   // only pets right by the ball (about a body away) bow for it
+  if(o.catchJump)o.catchJump.missed=true;
+  else if(near)startMissedBow(o,ball?.round||'pickup',bx);
+  else{o.target=null;o.onArrive=null;o.moveSpeed=0;o.dir=bx>=o.x?1:-1;setState(o,'stand',rand(1.2,2.2));}
+  o.happy=.8;}
 }
 function bringBack(e, caught){
   goTo(e, W*0.5 + rand(-0.12, 0.12)*W, dMin + (dMax-dMin)*rand(0.5, 0.75), false, () => {
@@ -2723,6 +2729,7 @@ function getCrouchSprite(p,amount){
 function startMissedJumps(winner,plan){
  if(!ball)return;let index=0;for(const o of ents){if(o===winner||o.chaseRound!==ball.round)continue;
  o.target=null;o.onArrive=null;o.bow=null;o.moveSpeed=0;o.carry=false;o.dir=ball.x>=o.x?1:-1;setState(o,'stand');
+ if(Math.hypot((o.x-plan.x)/Math.max(1,W),(o.depth-plan.d)/Math.max(1,dMax-dMin)*0.6)>=0.09){setState(o,'stand',rand(1.2,2.2));continue;}   // too far to try: just stop and watch
  const factor=petSizeFactor(petOf(o)),v=Math.min(plan.v*.8,Math.sqrt(2*1500*S*48*S*Math.sqrt(factor)));
  o.catchJump={phase:'prep',t:-index*.035,v,vx:o.dir*12*S,missed:true};requestCrouch(petOf(o));requestReach(petOf(o));index++;
  }
@@ -2855,6 +2862,7 @@ function enableScreenCheck(){
 }
 if (/debug/.test(location.hash + location.search)) enableScreenCheck();
 { let taps = 0, tt = null; const t = document.querySelector(".title"); if (t) t.addEventListener("click", () => { taps++; clearTimeout(tt); tt = setTimeout(() => taps = 0, 1200); if (taps >= 5) { taps = 0; enableScreenCheck(); } }); }
+
 
 
 
