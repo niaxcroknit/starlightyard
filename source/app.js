@@ -2899,6 +2899,7 @@ if (/debug/.test(location.hash + location.search)) enableScreenCheck();
 
 
 
+
 /* ===== yard sharing + sky lanterns (Claude) =====
  * Owner makes a share code; anyone with the code sees the yard read-only and can only launch sky lanterns.
  * Visitors never touch their own saved yard: save() is a no-op while visiting (window.__syVisit). */
@@ -3304,7 +3305,7 @@ $("cloudSend").addEventListener("click", async () => {
     $("cloudWait").hidden = false; $("cloudCodeRow").hidden = false; $("cloudCode").value = ""; setTimeout(() => $("cloudCode").focus(), 60);
     toast("메일을 보냈어요"); waitPair();
   }
-  catch (e) { toast(e.status === 429 ? "메일을 너무 자주 보냈어요. 잠시 뒤에 다시 해 주세요" : "메일을 보내지 못했어요. 잠시 뒤에 다시 해 주세요"); }
+  catch (e) { cloudEmail = em; $("cloudCodeRow").hidden = false; toast(e.status === 429 ? "메일을 너무 자주 보냈어요. 잠시 뒤에 다시 해 주세요" : "메일을 보내지 못했어요. 잠시 뒤에 다시 해 주세요"); }
   b.disabled = false;
 });
 $("cloudVerify").addEventListener("click", async () => {
@@ -3312,7 +3313,11 @@ $("cloudVerify").addEventListener("click", async () => {
   if (code.length < 6) { toast("메일로 받은 숫자를 모두 넣어 주세요"); return; }
   const b = $("cloudVerify"); b.disabled = true;
   try {
-    const s = await sbFetch("/auth/v1/verify", {method: "POST", headers: authHeaders(), body: JSON.stringify({type: "email", email: cloudEmail, token: code})});
+    let s;
+    try { s = await sbFetch("/auth/v1/verify", {method: "POST", headers: authHeaders(), body: JSON.stringify({type: "email", email: cloudEmail, token: code})}); }
+    catch (e1) {   // Google Play review account signs in with a fixed number (its password) instead of an emailed code
+      s = await sbFetch("/auth/v1/token?grant_type=password", {method: "POST", headers: authHeaders(), body: JSON.stringify({email: cloudEmail, password: code})});
+    }
     cloud = {access_token: s.access_token, refresh_token: s.refresh_token, expires_at: s.expires_at || (Date.now()/1000 + (s.expires_in || 3600)), email: s.user && s.user.email, uid: s.user && s.user.id};
     cloudStore(); try { localStorage.removeItem(PKEY); } catch (e) {} clearInterval(pairTimer); $("cloudWait").hidden = true; $("cloudCodeRow").hidden = true; renderCloud(); await cloudReconcile(true);
   } catch (e) { toast("숫자가 맞지 않거나 시간이 지났어요. 다시 받아 주세요"); }
