@@ -2,10 +2,11 @@
 
 안드로이드 스튜디오에서 이 폴더(`StarlightYard-android`)를 그대로 열면 됩니다. 노드(Node)나 다른 설치는 필요 없어요.
 
-1. 안드로이드 스튜디오 → **Open** → 이 폴더 선택
-2. 처음 열면 Gradle Sync가 자동으로 돌아요(인터넷 필요, 몇 분 걸릴 수 있어요)
-3. 위쪽 ▶(Run)을 누르면 연결한 폰이나 에뮬레이터에서 실행돼요
-4. 설치 파일 만들기: **Build → Build App Bundle(s) / APK(s) → Build APK(s)**
+1. 이 폴더를 **한글이 없는 경로**에 두세요. 예: `C:\dev\StarlightYard-android` (바탕화면·다운로드처럼 경로에 한글이 들어가면 빌드가 실패할 수 있어요)
+2. 안드로이드 스튜디오 → **Open** → 이 폴더 선택
+3. 처음 열면 Gradle Sync가 자동으로 돌아요(인터넷 필요, 몇 분 걸릴 수 있어요)
+4. 위쪽 ▶(Run)을 누르면 연결한 폰이나 에뮬레이터에서 실행돼요
+5. 설치 파일 만들기: **Build → Build App Bundle(s) / APK(s) → Build APK(s)**
    - 플레이 스토어용은 **Build → Generate Signed App Bundle / APK** 에서 서명 키를 만들어 `.aab`로 만들어요
 
 ## 들어 있는 것
