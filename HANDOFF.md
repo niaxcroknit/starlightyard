@@ -102,3 +102,8 @@ Playwright(크로미움)로 `source/`를 HTTP로 띄우고 localStorage에 샘�
 - 처음 로그인하는 폰에 다른 마당이 있으면 **절대 자동으로 덮지 않고** 고르게 함(고를 때까지 매번 다시 물음). 한 번 맞춘 뒤로는 더 최근에 바뀐 쪽을 따라감.
 - 새로 설치한 폰은 첫 화면의 '전에 쓰던 마당이 있어요 · 이메일로 불러오기'로 복원.
 - 코드: `tools/claude-patch/cloud_tail.js`, `cloud_tail.css` (apply_share.py가 함께 붙임). 시작 중 save()가 먼저 불리므로 상태 변수는 `var`로 둘 것.
+
+## 플레이 스토어 준비 (2026-11-23)
+- `android/`: 안드로이드 스튜디오 프로젝트(WebView, API 36, AGP 8.13). 웹을 고치면 `sh tools/make-android.sh`로 `assets/www`를 다시 채움.
+- 설정 → 서버에 저장 → 계정 삭제: 서버 함수 `sy_delete_me()`(본인 저장본 + 로그인 계정 삭제). 휴대폰 마당은 남김.
+- 개인정보처리방침: 저장소 루트 `privacy.html` (GitHub Pages).
