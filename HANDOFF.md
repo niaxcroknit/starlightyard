@@ -107,3 +107,6 @@ Playwright(크로미움)로 `source/`를 HTTP로 띄우고 localStorage에 샘�
 - `android/`: 안드로이드 스튜디오 프로젝트(WebView, API 36, AGP 8.13). 웹을 고치면 `sh tools/make-android.sh`로 `assets/www`를 다시 채움.
 - 설정 → 서버에 저장 → 계정 삭제: 서버 함수 `sy_delete_me()`(본인 저장본 + 로그인 계정 삭제). 휴대폰 마당은 남김.
 - 개인정보처리방침: 저장소 루트 `privacy.html` (GitHub Pages).
+
+## 앱 이름 (2026-11-23)
+- 앱 이름을 **별이 된 너에게**로 바꿈. 저장 키 `starlight-yard-v1`, 안드로이드 패키지 `com.starlightyard.app` 같은 내부 이름은 그대로 둠.

@@ -12,7 +12,7 @@ def must(s, a, n=1):
 
 # ---------- index.html: cache-busting + title ----------
 h = open(P('index.html')).read()
-h = re.sub(r'<title>[^<]*</title>', '<title>별빛 마당 · 우리의 시간</title>', h, count=1)
+h = re.sub(r'<title>[^<]*</title>', '<title>별이 된 너에게</title>', h, count=1)
 h = re.sub(r'href="\./app\.css(\?[^"]*)?"', f'href="./app.css?v={ver}"', h)
 h = re.sub(r'src="\./app\.js(\?[^"]*)?"', f'src="./app.js?v={ver}"', h)
 if 'id="decoMoveBtn"' not in h:

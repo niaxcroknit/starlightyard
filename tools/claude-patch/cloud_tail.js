@@ -148,7 +148,7 @@ if (pendingPair() && !cloud && !VISIT) waitPair();
   if (pair && !(mine && mine.id === pair)) {
     // opened in Safari, but the request came from the home-screen app: hand the login over, then sign in here too with a fresh session later
     let ok = false; try { ok = await syRpc("sy_pair_put", {p_id: pair, p_refresh: rt}); } catch (e) {}
-    $("pairDoneText").textContent = ok ? "로그인됐어요. 이제 홈 화면의 별빛 마당 앱으로 돌아가 주세요. 앱이 알아서 이어받아요." : "로그인을 넘겨주지 못했어요. 앱에서 메일을 다시 받아 주세요.";
+    $("pairDoneText").textContent = ok ? "로그인됐어요. 이제 홈 화면의 별이 된 너에게 앱으로 돌아가 주세요. 앱이 알아서 이어받아요." : "로그인을 넘겨주지 못했어요. 앱에서 메일을 다시 받아 주세요.";
     openVeil("pairVeil");
     return;
   }

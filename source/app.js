@@ -2540,7 +2540,7 @@ function renderBackup(){
   $("backupLast").textContent = (G.lastBackup ? `마지막 백업 ${fmtStamp(G.lastBackup)} · ` : "아직 백업한 적이 없어요 · ") + `아이 ${n} · 별 편지 ${st}` + (ph ? ` · 사진 ${ph}` : "");
 }
 async function saveBackup(){
-  const now = new Date(), name = `별빛마당-백업-${now.getFullYear()}${dpPad(now.getMonth()+1)}${dpPad(now.getDate())}.json`;
+  const now = new Date(), name = `별이된너에게-백업-${now.getFullYear()}${dpPad(now.getMonth()+1)}${dpPad(now.getDate())}.json`;
   const text = JSON.stringify({app: BACKUP_APP, version: 1, exportedAt: now.toISOString(), data: G});
   const blob = new Blob([text], {type: "application/json"});
   let ok = false;
@@ -2552,7 +2552,7 @@ async function saveBackup(){
   if (!ok) {
     try {
       const file = new File([blob], name, {type: "application/json"});
-      if (navigator.canShare && navigator.canShare({files: [file]}) && /iPhone|iPad|Android/i.test(navigator.userAgent)) { await navigator.share({files: [file], title: "별빛 마당 백업"}); ok = true; }
+      if (navigator.canShare && navigator.canShare({files: [file]}) && /iPhone|iPad|Android/i.test(navigator.userAgent)) { await navigator.share({files: [file], title: "별이 된 너에게 백업"}); ok = true; }
     } catch (e) { if (e && e.name === "AbortError") return; }
   }
   if (!ok) {
@@ -2567,7 +2567,7 @@ function readBackup(file){
   fr.onload = () => {
     let obj = null; try { obj = JSON.parse(fr.result); } catch (e) {}
     const data = obj && obj.app === BACKUP_APP ? obj.data : (obj && obj.family ? obj : null);
-    if (!data || !Array.isArray(data.family) || !data.family.length) { toast("별빛 마당 백업 파일이 아니에요"); return; }
+    if (!data || !Array.isArray(data.family) || !data.family.length) { toast("이 앱의 백업 파일이 아니에요"); return; }
     pendingBackup = data;
     const when = obj.exportedAt ? fmtStamp(obj.exportedAt) + "에 만든 " : "";
     $("backupConfirmText").textContent = `${when}백업이에요. 아이 ${data.family.length}마리(${data.family.map(p => p.name).join(", ")}), 별 편지 ${(data.stars||[]).length}개가 들어 있어요. 불러오면 지금 마당이 이 내용으로 바뀌어요.`;
@@ -2898,6 +2898,7 @@ if (/debug/.test(location.hash + location.search)) enableScreenCheck();
 
 
 
+
 /* ===== yard sharing + sky lanterns (Claude) =====
  * Owner makes a share code; anyone with the code sees the yard read-only and can only launch sky lanterns.
  * Visitors never touch their own saved yard: save() is a no-op while visiting (window.__syVisit). */
@@ -3110,7 +3111,7 @@ $("shareMake").addEventListener("click", async () => {
   b.disabled = false; b.textContent = "공유 코드 만들기";
 });
 $("shareCopyCode").addEventListener("click", () => G.share && copyText(G.share.code, "코드를 복사했어요"));
-$("shareCopyLink").addEventListener("click", () => G.share && copyText(`${(G.yardName || "별빛 마당")}에 놀러 와요\n${SY_LINK}?visit=${G.share.code}\n(공유 코드: ${G.share.code})`, "링크를 복사했어요"));
+$("shareCopyLink").addEventListener("click", () => G.share && copyText(`${(G.yardName || "우리 마당")}에 놀러 와요\n${SY_LINK}?visit=${G.share.code}\n(공유 코드: ${G.share.code})`, "링크를 복사했어요"));
 $("shareStop").addEventListener("click", () => { $("shareStopConfirm").hidden = false; });
 $("shareStopNo").addEventListener("click", () => { $("shareStopConfirm").hidden = true; });
 $("shareStopYes").addEventListener("click", async () => {
@@ -3358,7 +3359,7 @@ if (pendingPair() && !cloud && !VISIT) waitPair();
   if (pair && !(mine && mine.id === pair)) {
     // opened in Safari, but the request came from the home-screen app: hand the login over, then sign in here too with a fresh session later
     let ok = false; try { ok = await syRpc("sy_pair_put", {p_id: pair, p_refresh: rt}); } catch (e) {}
-    $("pairDoneText").textContent = ok ? "로그인됐어요. 이제 홈 화면의 별빛 마당 앱으로 돌아가 주세요. 앱이 알아서 이어받아요." : "로그인을 넘겨주지 못했어요. 앱에서 메일을 다시 받아 주세요.";
+    $("pairDoneText").textContent = ok ? "로그인됐어요. 이제 홈 화면의 별이 된 너에게 앱으로 돌아가 주세요. 앱이 알아서 이어받아요." : "로그인을 넘겨주지 못했어요. 앱에서 메일을 다시 받아 주세요.";
     openVeil("pairVeil");
     return;
   }

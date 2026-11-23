@@ -211,7 +211,7 @@ $("shareMake").addEventListener("click", async () => {
   b.disabled = false; b.textContent = "공유 코드 만들기";
 });
 $("shareCopyCode").addEventListener("click", () => G.share && copyText(G.share.code, "코드를 복사했어요"));
-$("shareCopyLink").addEventListener("click", () => G.share && copyText(`${(G.yardName || "별빛 마당")}에 놀러 와요\n${SY_LINK}?visit=${G.share.code}\n(공유 코드: ${G.share.code})`, "링크를 복사했어요"));
+$("shareCopyLink").addEventListener("click", () => G.share && copyText(`${(G.yardName || "우리 마당")}에 놀러 와요\n${SY_LINK}?visit=${G.share.code}\n(공유 코드: ${G.share.code})`, "링크를 복사했어요"));
 $("shareStop").addEventListener("click", () => { $("shareStopConfirm").hidden = false; });
 $("shareStopNo").addEventListener("click", () => { $("shareStopConfirm").hidden = true; });
 $("shareStopYes").addEventListener("click", async () => {

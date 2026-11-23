@@ -8,13 +8,13 @@
 <link rel="manifest" href="./manifest.webmanifest">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="별빛 마당">
+<meta name="apple-mobile-web-app-title" content="별이 된 너에게">
 <style>:root{color-scheme:light;background:#efe7ef}body{margin:0;font:14px/1.5 system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
-<title>별빛 마당 · 우리의 시간</title>
+<title>별이 된 너에게</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="icon" type="image/png" href="assets/asset-01.png?v=rainbow">
 <link rel="apple-touch-icon" href="assets/asset-02.png?v=rainbow">
-<link rel="stylesheet" href="./app.css?v=20261123-1">
+<link rel="stylesheet" href="./app.css?v=20261123-2">
 </head>
 <body>
 
@@ -59,7 +59,7 @@
   </div>
   <div class="veil" id="pairVeil" hidden>
     <div class="sheet px">
-      <h2>별빛 마당 로그인</h2>
+      <h2>로그인</h2>
       <p class="lead" id="pairDoneText"></p>
       <div class="btns"><button type="button" class="btn primary" data-close>확인</button></div>
     </div>
@@ -96,7 +96,7 @@
   <div class="veil" id="setupVeil" hidden>
     <form class="sheet px" id="setupForm" autocomplete="off">
       <h2 id="setupTitle">함께할 아이를 소개해 주세요</h2>
-      <p class="lead" id="setupLead">별빛 마당은 떠나보낸 아이와 천천히 시간을 보내는 작은 공간이에요. 여러 아이와 함께였다면 모두 데려올 수 있어요.</p>
+      <p class="lead" id="setupLead">이곳은 떠나보낸 아이와 천천히 시간을 보내는 작은 공간이에요. 여러 아이와 함께였다면 모두 데려올 수 있어요.</p>
       <button type="button" class="btn" id="setupCloud">전에 쓰던 마당이 있어요 · 이메일로 불러오기</button>
       <div class="fam">
         <span class="label">우리 아이들 (최대 10마리)</span>
@@ -308,7 +308,7 @@
 
 <div class="veil" id="guideVeil" hidden>
   <div class="sheet px guide" role="dialog" aria-modal="true" aria-labelledby="guideTitle">
-    <div class="g-top"><span class="g-kicker">별빛 마당 사용 방법</span><button type="button" class="g-skip" id="guideSkip">건너뛰기</button></div>
+    <div class="g-top"><span class="g-kicker">사용 방법</span><button type="button" class="g-skip" id="guideSkip">건너뛰기</button></div>
     <section class="g-page">
       <div class="g-art g-pat"><span class="g-hand"></span><span class="g-heart h1"></span><span class="g-heart h2"></span><span class="g-heart h3"></span></div>
       <h2 id="guideTitle">아이를 쓰다듬어 주세요</h2>
@@ -371,6 +371,6 @@
 (function(){var t0=Date.now();window.addEventListener("error",function(){if(Date.now()-t0>8000)return;try{var g=JSON.parse(localStorage.getItem("starlight-yard-v1")||"null");if(g&&g.set&&g.family&&g.family.length){var v=document.getElementById("setupVeil");if(v)v.hidden=true;var d=document.getElementById("dock");if(d)d.hidden=false;}}catch(e){}});})();</script>
 <div id="visitCover"><p id="visitCoverText">친구 마당으로 가는 중…</p><div class="btns" style="justify-content:center"><button type="button" class="btn" id="visitCoverHome" hidden>내 마당으로</button></div></div>
 <script>if(/[?&]visit=/.test(location.search))document.documentElement.classList.add("visiting");</script>
-<script src="./app.js?v=20261123-1"></script>
+<script src="./app.js?v=20261123-2"></script>
 </body>
 </html>

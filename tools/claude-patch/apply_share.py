@@ -97,7 +97,7 @@ h = h.replace('<div class="cloud-row"><input type="email" id="cloudEmail" placeh
 if 'id="pairVeil"' not in h:
     a = '  <div class="veil" id="lanternVeil" hidden>'
     must(h, a)
-    h = h.replace(a, '  <div class="veil" id="pairVeil" hidden>\n    <div class="sheet px">\n      <h2>별빛 마당 로그인</h2>\n      <p class="lead" id="pairDoneText"></p>\n      <div class="btns"><button type="button" class="btn primary" data-close>확인</button></div>\n    </div>\n  </div>\n' + a, 1)
+    h = h.replace(a, '  <div class="veil" id="pairVeil" hidden>\n    <div class="sheet px">\n      <h2>로그인</h2>\n      <p class="lead" id="pairDoneText"></p>\n      <div class="btns"><button type="button" class="btn primary" data-close>확인</button></div>\n    </div>\n  </div>\n' + a, 1)
 if 'id="cloudVeil"' not in h:
     a = '  <div class="veil" id="lanternVeil" hidden>'
     must(h, a)

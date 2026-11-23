@@ -36,7 +36,7 @@ import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 
 /**
- * 별빛 마당 — the web app (app/src/main/assets/www) shown full screen in a WebView.
+ * 별이 된 너에게 — the web app (app/src/main/assets/www) shown full screen in a WebView.
  * Files are served from https://appassets.androidplatform.net/ so the canvas drawing, saved data (localStorage)
  * and the sharing/cloud server all behave as on the web.
  */
@@ -159,7 +159,7 @@ public class MainActivity extends Activity {
         public void copyText(String text) {
             runOnUiThread(() -> {
                 ClipboardManager cm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
-                if (cm != null) cm.setPrimaryClip(ClipData.newPlainText("별빛 마당", text));
+                if (cm != null) cm.setPrimaryClip(ClipData.newPlainText("별이 된 너에게", text));
             });
         }
     }
