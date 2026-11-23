@@ -6,6 +6,7 @@ def must(s, a):
     assert s.count(a) == 1, f"anchor {s.count(a)}: {a[:70]!r}"
 
 h = open(P('index.html')).read()
+h = h.replace('          <div class="btns"><button type="button" class="btn" id="cloudOut">로그아웃</button></div>\n        </div>', '          <div class="btns"><button type="button" class="btn" id="cloudOut">로그아웃</button><button type="button" class="btn" id="cloudDel">계정 삭제</button></div>\n          <div class="backup-confirm" id="cloudDelConfirm" hidden>\n            <p>서버에 저장된 마당과 로그인 정보(이메일)가 지워져요. 이 휴대폰에 있는 마당은 그대로 남아요.</p>\n            <div class="btns"><button type="button" class="btn" id="cloudDelNo">그대로 둘게요</button><button type="button" class="btn primary" id="cloudDelYes">삭제하기</button></div>\n          </div>\n        </div>')
 h = h.replace('</button></div>\\n          <p class="small cloud-wait"', '</button></div>\n          <p class="small cloud-wait"')
 h = h.replace('숫자 6개를 아래에', '숫자를 아래에')
 h = h.replace('<input type="text" id="cloudCode" placeholder="메일로 온 숫자 6개" inputmode="numeric" autocomplete="one-time-code" maxlength="6">', '<input type="text" id="cloudCode" placeholder="메일로 온 숫자" inputmode="numeric" autocomplete="one-time-code" maxlength="10">')
@@ -81,7 +82,11 @@ if 'id="cloudTitle"' not in h:
         </div>
         <div id="cloudOn" hidden>
           <p class="small" id="cloudStatus"></p>
-          <div class="btns"><button type="button" class="btn" id="cloudOut">로그아웃</button></div>
+          <div class="btns"><button type="button" class="btn" id="cloudOut">로그아웃</button><button type="button" class="btn" id="cloudDel">계정 삭제</button></div>
+          <div class="backup-confirm" id="cloudDelConfirm" hidden>
+            <p>서버에 저장된 마당과 로그인 정보(이메일)가 지워져요. 이 휴대폰에 있는 마당은 그대로 남아요.</p>
+            <div class="btns"><button type="button" class="btn" id="cloudDelNo">그대로 둘게요</button><button type="button" class="btn primary" id="cloudDelYes">삭제하기</button></div>
+          </div>
         </div>
       </section>
 ''' + a, 1)

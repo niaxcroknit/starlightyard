@@ -23,4 +23,4 @@
 ## 웹 버전을 고친 뒤 다시 넣기
 저장소 루트에서 `sh tools/make-android.sh` 를 실행하면 최신 웹 파일이 `assets/www`로 복사돼요.
 
-요구 사항: Android Studio Ladybug(2024.2) 이상 · Android Gradle Plugin 8.7.3 · Gradle 8.9 · compileSdk/targetSdk 35 · minSdk 24
+요구 사항: Android Studio Narwhal 3 Feature Drop(2025.1.3) 이상 · Android Gradle Plugin 8.13 · Gradle 8.13 · compileSdk/targetSdk 36(안드로이드 16) · minSdk 24

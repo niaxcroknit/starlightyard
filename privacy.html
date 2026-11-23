@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>별빛 마당 개인정보처리방침</title>
+<link rel="icon" type="image/png" href="./icons/app-icon-512-square.png?v=rainbow">
+<style>
+:root{--bg:#fbf7f4;--card:#fffdfb;--ink:#4a3a4c;--muted:#8a7890;--line:#eadfe6;--accent:#9b86cf;--soft:#f3ecf4}
+@media (prefers-color-scheme:dark){:root{--bg:#1f1a24;--card:#29222f;--ink:#efe6f2;--muted:#b3a5ba;--line:#3b3242;--accent:#c4b3f0;--soft:#30283a}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.75 system-ui,-apple-system,"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif;word-break:keep-all}
+main{max-width:720px;margin:0 auto;padding:40px max(18px,env(safe-area-inset-left)) 64px max(18px,env(safe-area-inset-right))}
+header{display:flex;align-items:center;gap:14px;margin-bottom:8px}
+header img{width:56px;height:56px;border-radius:14px}
+h1{font-size:24px;margin:0;letter-spacing:-.3px}
+.date{color:var(--muted);font-size:14px;margin:4px 0 28px}
+h2{font-size:18px;margin:34px 0 10px;padding-top:6px;border-top:1px solid var(--line)}
+p,li{margin:6px 0}
+ul{padding-left:20px}
+.box{background:var(--soft);border-radius:14px;padding:14px 16px;margin:12px 0}
+table{width:100%;border-collapse:collapse;font-size:15px;margin:10px 0}
+th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+th{background:var(--soft);font-weight:600}
+.wrap{overflow-x:auto}
+a{color:var(--accent)}
+b{font-weight:650}
+</style>
+</head>
+<body>
+<main>
+<header><img src="./icons/app-icon-512-square.png?v=rainbow" alt=""><h1>별빛 마당 개인정보처리방침</h1></header>
+<p class="date">시행일: 2026년 11월 23일</p>
+
+<p>별빛 마당(이하 “앱”)은 떠나보낸 반려동물과 조용히 시간을 보내는 앱입니다. 앱은 광고를 보여주지 않고, 사용 기록을 분석하거나 개인정보를 팔지 않습니다. 이 문서는 앱이 어떤 정보를 어디에 저장하고 어떻게 지우는지 설명합니다.</p>
+
+<h2>1. 휴대폰 안에만 저장되는 정보</h2>
+<p>아이들의 이름·종류·사진, 별 편지, 기념일, 기분 기록, 꾸민 마당 같은 기록은 <b>기본적으로 사용자의 휴대폰 안에만</b> 저장됩니다. 운영자는 이 정보를 볼 수 없습니다. 앱을 지우면 함께 지워집니다.</p>
+
+<h2>2. 선택해서 쓸 때만 서버에 저장되는 정보</h2>
+<p>아래 기능은 사용자가 직접 켰을 때만 동작합니다.</p>
+<div class="wrap"><table>
+<tr><th>기능</th><th>저장되는 정보</th><th>목적</th><th>보관 기간</th></tr>
+<tr><td>서버에 저장<br>(이메일 로그인)</td><td>이메일 주소, 마당 전체 기록(아이 정보·사진·별 편지·꾸민 마당 포함)</td><td>휴대폰을 바꾸거나 앱을 다시 설치했을 때 마당을 되찾기 위해</td><td>계정을 삭제할 때까지</td></tr>
+<tr><td>마당 공유</td><td>마당 이름, 하늘 설정, 온기, 꾸민 장식과 위치, 아이 이름·종류·한마디, (사용자가 켠 경우에만) 아이 사진</td><td>공유 코드를 받은 사람이 마당을 구경할 수 있게 하기 위해</td><td>‘공유 그만하기’를 누를 때까지</td></tr>
+<tr><td>풍등 띄우기</td><td>풍등에 적은 이름, 띄운 시각, 하루 한 개 제한을 위한 무작위 기기 값</td><td>마당 하늘에 풍등을 보여주고 하루 한 개만 띄우게 하기 위해</td><td>마당 공유를 그만둘 때까지(마당마다 최근 200개까지만 보관)</td></tr>
+</table></div>
+<p><b>별 편지, 기념일, 기분 기록은 마당 공유에 포함되지 않습니다.</b> 풍등에 적은 이름은 마당 주인에게만 보이고, 놀러 온 다른 사람에게는 보이지 않습니다.</p>
+
+<h2>3. 정보를 맡기는 곳</h2>
+<p>서버 기능은 <b>Supabase</b>(데이터베이스·로그인 서비스)를 이용하며, 데이터는 Amazon Web Services 서울 리전에 저장됩니다. 로그인용 인증 메일은 운영자의 Gmail 계정으로 발송됩니다. 그 밖의 제3자에게 정보를 제공하거나 판매하지 않습니다. 모든 통신은 암호화(HTTPS)되어 전송됩니다.</p>
+
+<h2>4. 계정과 데이터 삭제</h2>
+<div class="box">
+<p><b>앱에서 바로 지우기</b><br>설정 → 서버에 저장 → <b>계정 삭제</b> → 삭제하기<br>로그인 정보(이메일)와 서버에 저장된 마당이 즉시 지워집니다. 휴대폰에 있는 마당은 그대로 남습니다.</p>
+<p><b>공유한 마당 지우기</b><br>설정 → 마당 공유 → <b>공유 그만하기</b><br>공유된 마당과 그 마당에 띄워진 풍등이 즉시 지워집니다.</p>
+<p><b>앱을 쓸 수 없을 때</b><br>아래 연락처로 로그인했던 이메일 주소를 적어 삭제를 요청하면, 7일 안에 지우고 알려 드립니다.</p>
+</div>
+
+<h2>5. 어린이</h2>
+<p>서버 저장(이메일 로그인)과 마당 공유는 만 14세 이상을 위한 기능입니다. 만 14세 미만 어린이의 개인정보를 알고서 수집하지 않습니다.</p>
+
+<h2>6. 이용자의 권리</h2>
+<p>언제든지 자신의 정보를 확인하거나, 고치거나, 지우거나, 처리를 멈추도록 요청할 수 있습니다. 앱 안의 기능을 쓰거나 아래 연락처로 요청해 주세요.</p>
+
+<h2>7. 바뀌는 경우</h2>
+<p>이 방침이 바뀌면 이 페이지와 앱 소개에 알리고, 시행일을 새로 적습니다.</p>
+
+<h2>8. 연락처</h2>
+<p>개인정보 보호 책임자: 별빛 마당 운영자<br>이메일: <span id="contact">[연락받을 이메일]</span></p>
+</main>
+</body>
+</html>

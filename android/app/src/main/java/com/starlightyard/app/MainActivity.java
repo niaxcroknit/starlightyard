@@ -9,6 +9,7 @@ import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.graphics.Color;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
 import android.view.ViewGroup;
@@ -20,6 +21,7 @@ import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.widget.FrameLayout;
+import android.window.OnBackInvokedDispatcher;
 import android.widget.Toast;
 
 import androidx.core.graphics.Insets;
@@ -126,6 +128,11 @@ public class MainActivity extends Activity {
 
         webView.addJavascriptInterface(new Bridge(), "StarlightAndroid");
 
+        // Back: Android 13+ uses the back callback (required when targeting Android 16); older versions use onBackPressed.
+        if (Build.VERSION.SDK_INT >= 33) {
+            getOnBackInvokedDispatcher().registerOnBackInvokedCallback(OnBackInvokedDispatcher.PRIORITY_DEFAULT, this::handleBack);
+        }
+
         if (savedInstanceState != null) webView.restoreState(savedInstanceState);
         else webView.loadUrl(START_URL);
     }
@@ -179,9 +186,7 @@ public class MainActivity extends Activity {
     }
 
     /** Back button: close an open sheet or leave lantern view first; otherwise leave the app. */
-    @Override
-    @SuppressWarnings("deprecation")
-    public void onBackPressed() {
+    private void handleBack() {
         String js = "(function(){"
                 + "var open=[].slice.call(document.querySelectorAll('.veil')).filter(function(v){return !v.hidden;});"
                 + "if(open.length){document.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape'}));return 'sheet';}"
@@ -189,8 +194,14 @@ public class MainActivity extends Activity {
                 + "if(document.documentElement.classList.contains('lantern-mode')&&b&&bar&&!bar.hidden){b.click();return 'lantern';}"
                 + "return 'none';})()";
         webView.evaluateJavascript(js, value -> {
-            if (value == null || value.contains("none")) MainActivity.super.onBackPressed();
+            if (value == null || value.contains("none")) finish();
         });
+    }
+
+    @Override
+    @SuppressWarnings("deprecation")
+    public void onBackPressed() {
+        handleBack();   // Android 12 and older
     }
 
     @Override

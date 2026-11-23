@@ -75,7 +75,7 @@ $("cloudPickServer").addEventListener("click", () => { closeVeil("cloudVeil"); i
 
 /* settings UI */
 function renderCloud(){
-  const on = !!cloud;
+  const on = !!cloud; if ($("cloudDelConfirm")) $("cloudDelConfirm").hidden = true;
   $("cloudOff").hidden = on; $("cloudOn").hidden = !on;
   if (on) $("cloudStatus").textContent = `${cloud.email || "내 이메일"}로 저장하고 있어요.` + (cloudErr ? " " + cloudErr : cloudLast ? ` 마지막 저장 ${fmtWhen(cloudLast)}` : "");
 }
@@ -154,3 +154,17 @@ if (pendingPair() && !cloud && !VISIT) waitPair();
   }
   await loggedIn({access_token: at, refresh_token: rt, expires_in: Number(h.get("expires_in")) || 3600, user});
 })();
+
+/* delete my login account and my saved copy on the server (this phone's yard stays) */
+$("cloudDel").addEventListener("click", () => { $("cloudDelConfirm").hidden = false; });
+$("cloudDelNo").addEventListener("click", () => { $("cloudDelConfirm").hidden = true; });
+$("cloudDelYes").addEventListener("click", async () => {
+  const b = $("cloudDelYes"); b.disabled = true;
+  try {
+    const tk = await cloudToken(); if (!tk) throw new Error("no session");
+    const ok = await sbFetch("/rest/v1/rpc/sy_delete_me", {method: "POST", headers: Object.assign(authHeaders(), {Authorization: "Bearer " + tk}), body: "{}"});
+    if (ok !== true) throw new Error("not deleted");
+    cloud = null; cloudReady = false; cloudStore(); $("cloudDelConfirm").hidden = true; renderCloud(); toast("계정과 서버에 저장된 마당을 지웠어요");
+  } catch (e) { toast("지우지 못했어요. 인터넷 연결을 확인하고 다시 해 주세요"); }
+  b.disabled = false;
+});
