@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.ActivityNotFoundException;
 import android.content.ClipData;
 import android.content.ClipboardManager;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
@@ -11,6 +12,9 @@ import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
+import android.provider.MediaStore;
+import android.util.Base64;
 import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.JavascriptInterface;
@@ -46,10 +50,12 @@ public class MainActivity extends Activity {
     private static final String START_URL = "https://" + HOST + "/assets/www/index.html";
     private static final int REQ_PICK_FILE = 41;
     private static final int REQ_SAVE_FILE = 42;
+    private static final int REQ_SAVE_IMAGE = 43;
 
     private WebView webView;
     private ValueCallback<Uri[]> pendingPick;
     private String pendingSaveText;
+    private byte[] pendingImage;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -155,6 +161,37 @@ public class MainActivity extends Activity {
             });
         }
 
+        /** Save a picture (a star letter card) to the photo gallery, in an album named after the app. */
+        @JavascriptInterface
+        public void saveImage(String name, String base64Png) {
+            final byte[] png;
+            try { png = Base64.decode(base64Png, Base64.DEFAULT); } catch (IllegalArgumentException e) { return; }
+            runOnUiThread(() -> {
+                if (Build.VERSION.SDK_INT >= 29) {
+                    ContentValues v = new ContentValues();
+                    v.put(MediaStore.Images.Media.DISPLAY_NAME, name);
+                    v.put(MediaStore.Images.Media.MIME_TYPE, "image/png");
+                    v.put(MediaStore.Images.Media.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + "/" + getString(R.string.app_name));
+                    try {
+                        Uri uri = getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, v);
+                        if (uri == null) throw new Exception("no uri");
+                        try (OutputStream out = getContentResolver().openOutputStream(uri)) { if (out != null) out.write(png); }
+                        Toast.makeText(MainActivity.this, "편지를 사진첩에 저장했어요", Toast.LENGTH_SHORT).show();
+                    } catch (Exception e) {
+                        Toast.makeText(MainActivity.this, "사진을 저장하지 못했어요", Toast.LENGTH_SHORT).show();
+                    }
+                } else {
+                    // older Android: let the person choose where to save it (no storage permission needed)
+                    pendingImage = png;
+                    Intent i = new Intent(Intent.ACTION_CREATE_DOCUMENT);
+                    i.addCategory(Intent.CATEGORY_OPENABLE);
+                    i.setType("image/png");
+                    i.putExtra(Intent.EXTRA_TITLE, name);
+                    try { startActivityForResult(i, REQ_SAVE_IMAGE); } catch (ActivityNotFoundException e) { pendingImage = null; }
+                }
+            });
+        }
+
         @JavascriptInterface
         public void copyText(String text) {
             runOnUiThread(() -> {
@@ -171,6 +208,16 @@ public class MainActivity extends Activity {
             if (pendingPick != null) {
                 pendingPick.onReceiveValue(WebChromeClient.FileChooserParams.parseResult(resultCode, data));
                 pendingPick = null;
+            }
+        } else if (requestCode == REQ_SAVE_IMAGE) {
+            byte[] png = pendingImage;
+            pendingImage = null;
+            if (resultCode != RESULT_OK || data == null || data.getData() == null || png == null) return;
+            try (OutputStream out = getContentResolver().openOutputStream(data.getData())) {
+                if (out != null) out.write(png);
+                Toast.makeText(this, "편지를 저장했어요", Toast.LENGTH_SHORT).show();
+            } catch (Exception e) {
+                Toast.makeText(this, "사진을 저장하지 못했어요", Toast.LENGTH_SHORT).show();
             }
         } else if (requestCode == REQ_SAVE_FILE) {
             String text = pendingSaveText;

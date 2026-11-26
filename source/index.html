@@ -14,7 +14,7 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="icon" type="image/png" href="assets/asset-01.png?v=rainbow">
 <link rel="apple-touch-icon" href="assets/asset-02.png?v=rainbow">
-<link rel="stylesheet" href="./app.css?v=20261123-3">
+<link rel="stylesheet" href="./app.css?v=20261126-1">
 </head>
 <body>
 
@@ -158,6 +158,7 @@
       <p class="letter" id="readText"></p>
       <div class="btns" id="readBtns">
         <button type="button" class="btn" id="readDelete">지우기</button>
+        <button type="button" class="btn" id="readKeepCard">간직하기</button>
         <button type="button" class="btn primary" data-close>하늘에 그대로 두기</button>
       </div>
       <div class="btns" id="readConfirm" hidden>
@@ -240,6 +241,16 @@
           <option value="day">늘 낮</option>
           <option value="dusk">늘 노을</option>
           <option value="night">늘 밤</option>
+        </select>
+      </label>
+      <label class="field"><span>계절</span>
+        <select id="seasonSel">
+          <option value="auto">지금 계절 따라가기</option>
+          <option value="spring">늘 봄 · 꽃잎</option>
+          <option value="summer">늘 여름</option>
+          <option value="autumn">늘 가을 · 낙엽</option>
+          <option value="winter">늘 겨울 · 눈</option>
+          <option value="off">계절 효과 끄기</option>
         </select>
       </label>
       <div class="btns"><button type="button" class="btn" id="editPet">아이들 정보 바꾸기 · 추가하기</button></div>
@@ -371,6 +382,6 @@
 (function(){var t0=Date.now();window.addEventListener("error",function(){if(Date.now()-t0>8000)return;try{var g=JSON.parse(localStorage.getItem("starlight-yard-v1")||"null");if(g&&g.set&&g.family&&g.family.length){var v=document.getElementById("setupVeil");if(v)v.hidden=true;var d=document.getElementById("dock");if(d)d.hidden=false;}}catch(e){}});})();</script>
 <div id="visitCover"><p id="visitCoverText">친구 마당으로 가는 중…</p><div class="btns" style="justify-content:center"><button type="button" class="btn" id="visitCoverHome" hidden>내 마당으로</button></div></div>
 <script>if(/[?&]visit=/.test(location.search))document.documentElement.classList.add("visiting");</script>
-<script src="./app.js?v=20261123-3"></script>
+<script src="./app.js?v=20261126-1"></script>
 </body>
 </html>

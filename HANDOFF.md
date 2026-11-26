@@ -110,3 +110,8 @@ Playwright(크로미움)로 `source/`를 HTTP로 띄우고 localStorage에 샘�
 
 ## 앱 이름 (2026-11-23)
 - 앱 이름을 **별이 된 너에게**로 바꿈. 저장 키 `starlight-yard-v1`, 안드로이드 패키지 `com.starlightyard.app` 같은 내부 이름은 그대로 둠.
+
+## 계절 · 편지 간직하기 (2026-11-26, 안드로이드 1.1 / versionCode 2)
+- 계절: 3~5월 봄(꽃잎), 6~8월 여름, 9~11월 가을(낙엽), 12~2월 겨울(눈, 땅에 쌓인 눈). 설정 → 계절에서 고정하거나 끌 수 있음(`G.season`).
+- 별 편지 읽기 → 간직하기: 1080×1350 카드 이미지. 안드로이드는 사진첩(Pictures/별이 된 너에게)에 저장.
+- 코드: `tools/claude-patch/season_tail.js` (apply_share.py가 함께 붙임).
